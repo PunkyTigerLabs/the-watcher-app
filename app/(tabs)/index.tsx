@@ -1,84 +1,124 @@
-import { ScrollView, View, Text, StyleSheet } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { ScrollView, View, Text, StyleSheet, Animated } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import SignalArc from '../../src/components/SignalArc';
 import FlowCard from '../../src/components/FlowCard';
-import { colors } from '../../src/theme';
+import PulsingDot from '../../src/components/PulsingDot';
+import TickerRibbon from '../../src/components/TickerRibbon';
+import GlowCard from '../../src/components/GlowCard';
+import { colors, gradients } from '../../src/theme';
 import { currentSignal, aiNarrative, topInflows, topOutflows, stats } from '../../src/data/mockData';
 
 const fmt = (n: number) => n >= 1e9 ? `$${(n/1e9).toFixed(1)}B` : `$${(n/1e6).toFixed(0)}M`;
 
+const tickerItems = [
+  { label: 'USDC SUPPLY', value: '$52.1B', change: 2.4 },
+  { label: 'USDT SUPPLY', value: '$140.2B', change: 0.8 },
+  { label: 'BTC', value: '$87,420', change: 3.2 },
+  { label: 'ETH', value: '$3,280', change: -1.4 },
+  { label: 'BUIDL TVL', value: '$2.7B', change: 5.8 },
+  { label: 'SIGNAL', value: '+67', change: 4.1 },
+];
+
 export default function Dashboard() {
+  const headerOpacity = useRef(new Animated.Value(0)).current;
+  const contentSlide = useRef(new Animated.Value(20)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(headerOpacity, { toValue: 1, duration: 800, useNativeDriver: true }),
+      Animated.timing(contentSlide, { toValue: 0, duration: 600, useNativeDriver: true }),
+    ]).start();
+  }, []);
+
   return (
-    <SafeAreaView style={styles.safe}>
-      <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
-
-        {/* Header */}
-        <View style={styles.header}>
-          <View style={styles.logoRow}>
-            <View style={styles.liveDot} />
-            <Text style={styles.logo}>WATCHER</Text>
+    <SafeAreaView style={styles.safe} edges={['top']}>
+      {/* Header */}
+      <Animated.View style={[styles.header, { opacity: headerOpacity }]}>
+        <View style={styles.logoRow}>
+          <PulsingDot color={colors.green} size={6} />
+          <Text style={styles.logo}>THE WATCHER</Text>
+          <View style={styles.liveBadge}>
+            <Text style={styles.liveText}>LIVE</Text>
           </View>
-          <Text style={styles.subhead}>Capital Flow Intelligence</Text>
         </View>
+        <Text style={styles.subhead}>Capital Flow Intelligence</Text>
+      </Animated.View>
 
+      {/* Ticker ribbon */}
+      <TickerRibbon items={tickerItems} />
+
+      <Animated.ScrollView
+        style={[styles.scroll, { opacity: headerOpacity, transform: [{ translateY: contentSlide }] }]}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Signal Arc Hero */}
-        <LinearGradient
-          colors={['#0D1117', '#080B12']}
-          style={styles.heroCard}
-        >
+        <LinearGradient colors={[...gradients.hero]} style={styles.heroCard}>
+          <View style={styles.heroGlowRing} />
           <SignalArc score={currentSignal.score} label={currentSignal.label} />
-          <Text style={styles.updatedText}>Updated {currentSignal.updatedAgo}</Text>
+          <View style={styles.updatedRow}>
+            <View style={styles.updateDot} />
+            <Text style={styles.updatedText}>Updated {currentSignal.updatedAgo}</Text>
+          </View>
         </LinearGradient>
 
         {/* Stats Row */}
         <View style={styles.statsRow}>
           {[
-            { label: 'VOLUME 24H', value: fmt(stats.totalVolume) },
-            { label: 'USDC NET', value: `+${fmt(stats.usdcNet)}`, green: true },
-            { label: 'TOP FLOW', value: fmt(stats.largestFlow) },
+            { label: '24H VOLUME', value: fmt(stats.totalVolume), color: colors.text },
+            { label: 'USDC NET', value: `+${fmt(stats.usdcNet)}`, color: colors.green },
+            { label: 'LARGEST', value: fmt(stats.largestFlow), color: colors.cyan },
           ].map(s => (
             <View key={s.label} style={styles.statCard}>
               <Text style={styles.statLabel}>{s.label}</Text>
-              <Text style={[styles.statValue, s.green && { color: colors.green }]}>{s.value}</Text>
+              <Text style={[styles.statValue, { color: s.color }]}>{s.value}</Text>
             </View>
           ))}
         </View>
 
         {/* AI Narrative */}
-        <View style={styles.narrativeCard}>
+        <GlowCard glowColor={colors.cyan}>
           <View style={styles.narrativeHeader}>
-            <View style={styles.liveDot} />
-            <Text style={styles.sectionTitle}>AI FLOW ANALYST</Text>
+            <PulsingDot color={colors.cyan} size={5} />
+            <Text style={[styles.sectionTitle, { color: colors.cyan }]}>FLOW ANALYST</Text>
             <Text style={styles.updatedSmall}>{currentSignal.updatedAgo}</Text>
           </View>
           <Text style={styles.narrativeText}>{aiNarrative}</Text>
-        </View>
+        </GlowCard>
 
         {/* Inflows */}
-        <View style={styles.section}>
-          <View style={styles.sectionRow}>
-            <Text style={[styles.arrow, { color: colors.green }]}>▲</Text>
-            <Text style={styles.sectionTitle}>TOP INFLOWS</Text>
+        <GlowCard glowColor={colors.green} noPadding>
+          <View style={styles.sectionHeader}>
+            <Text style={[styles.sectionArrow, { color: colors.green }]}>▲</Text>
+            <Text style={[styles.sectionTitle, { color: colors.green }]}>INFLOWS</Text>
+            <View style={styles.sectionLine} />
+            <Text style={[styles.sectionTotal, { color: colors.green }]}>
+              +{fmt(topInflows.reduce((s, f) => s + f.amount, 0))}
+            </Text>
           </View>
-          {topInflows.map(f => (
-            <FlowCard key={f.name} {...f} direction="in" />
+          {topInflows.map((f, i) => (
+            <FlowCard key={f.name} {...f} direction="in" isNew={i === 0} />
           ))}
-        </View>
+        </GlowCard>
 
         {/* Outflows */}
-        <View style={styles.section}>
-          <View style={styles.sectionRow}>
-            <Text style={[styles.arrow, { color: colors.red }]}>▼</Text>
-            <Text style={styles.sectionTitle}>TOP OUTFLOWS</Text>
+        <GlowCard glowColor={colors.red} noPadding>
+          <View style={styles.sectionHeader}>
+            <Text style={[styles.sectionArrow, { color: colors.red }]}>▼</Text>
+            <Text style={[styles.sectionTitle, { color: colors.red }]}>OUTFLOWS</Text>
+            <View style={styles.sectionLine} />
+            <Text style={[styles.sectionTotal, { color: colors.red }]}>
+              -{fmt(topOutflows.reduce((s, f) => s + f.amount, 0))}
+            </Text>
           </View>
-          {topOutflows.map(f => (
+          {topOutflows.map((f, i) => (
             <FlowCard key={f.name} {...f} direction="out" />
           ))}
-        </View>
+        </GlowCard>
 
-        <View style={{ height: 20 }} />
-      </ScrollView>
+        <View style={{ height: 30 }} />
+      </Animated.ScrollView>
     </SafeAreaView>
   );
 }
@@ -86,22 +126,73 @@ export default function Dashboard() {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.bg },
   scroll: { flex: 1 },
-  header: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 12 },
-  logoRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 },
-  liveDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.green },
-  logo: { color: colors.text, fontSize: 20, fontWeight: '800', letterSpacing: 3 },
-  subhead: { color: colors.muted, fontSize: 12, letterSpacing: 0.5 },
+  header: {
+    paddingHorizontal: 20,
+    paddingTop: 8,
+    paddingBottom: 10,
+  },
+  logoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginBottom: 2,
+  },
+  logo: {
+    color: colors.text,
+    fontSize: 18,
+    fontWeight: '800',
+    letterSpacing: 4,
+  },
+  liveBadge: {
+    marginLeft: 8,
+    backgroundColor: colors.green + '18',
+    borderWidth: 0.5,
+    borderColor: colors.green + '40',
+    borderRadius: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  liveText: {
+    color: colors.green,
+    fontSize: 8,
+    fontWeight: '800',
+    letterSpacing: 1.5,
+  },
+  subhead: { color: colors.muted, fontSize: 11, letterSpacing: 0.5, marginLeft: 22 },
 
   heroCard: {
     marginHorizontal: 16,
     borderRadius: 16,
-    padding: 20,
+    padding: 24,
     alignItems: 'center',
-    borderWidth: 1,
+    borderWidth: 0.5,
     borderColor: colors.border,
+    marginTop: 12,
     marginBottom: 12,
+    overflow: 'hidden',
   },
-  updatedText: { color: colors.muted, fontSize: 11, marginTop: 4, letterSpacing: 0.5 },
+  heroGlowRing: {
+    position: 'absolute',
+    width: 200,
+    height: 200,
+    borderRadius: 100,
+    borderWidth: 1,
+    borderColor: colors.green + '08',
+    top: 20,
+  },
+  updatedRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 4,
+  },
+  updateDot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: colors.green,
+  },
+  updatedText: { color: colors.muted, fontSize: 10, letterSpacing: 0.5 },
 
   statsRow: {
     flexDirection: 'row',
@@ -111,43 +202,34 @@ const styles = StyleSheet.create({
   },
   statCard: {
     flex: 1,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.surfaceSolid,
     borderRadius: 10,
-    borderWidth: 1,
+    borderWidth: 0.5,
     borderColor: colors.border,
     padding: 12,
   },
-  statLabel: { color: colors.muted, fontSize: 9, fontWeight: '600', letterSpacing: 1, marginBottom: 4 },
-  statValue: { color: colors.text, fontSize: 14, fontWeight: '700', letterSpacing: -0.5 },
+  statLabel: { color: colors.muted, fontSize: 8, fontWeight: '700', letterSpacing: 1.2, marginBottom: 4 },
+  statValue: { fontSize: 15, fontWeight: '700', letterSpacing: -0.5, fontVariant: ['tabular-nums'] },
 
-  narrativeCard: {
-    marginHorizontal: 16,
-    backgroundColor: colors.surface,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: colors.border,
-    padding: 16,
-    marginBottom: 16,
-  },
-  narrativeHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 },
+  narrativeHeader: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 10 },
   narrativeText: {
     color: colors.textSub,
     fontSize: 13,
     lineHeight: 21,
-    fontFamily: 'monospace',
   },
-  updatedSmall: { color: colors.muted, fontSize: 11, marginLeft: 'auto' },
+  updatedSmall: { color: colors.muted, fontSize: 10, marginLeft: 'auto' },
 
-  section: {
-    marginHorizontal: 16,
-    backgroundColor: colors.surface,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: colors.border,
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
     paddingHorizontal: 16,
-    marginBottom: 12,
+    paddingVertical: 12,
+    borderBottomWidth: 0.5,
+    borderBottomColor: colors.border,
   },
-  sectionRow: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 12 },
-  sectionTitle: { color: colors.muted, fontSize: 11, fontWeight: '700', letterSpacing: 1.5 },
-  arrow: { fontSize: 11, fontWeight: '700' },
+  sectionArrow: { fontSize: 11, fontWeight: '700' },
+  sectionTitle: { fontSize: 10, fontWeight: '700', letterSpacing: 1.5 },
+  sectionLine: { flex: 1, height: 0.5, backgroundColor: colors.border },
+  sectionTotal: { fontSize: 13, fontWeight: '700', fontVariant: ['tabular-nums'] },
 });
