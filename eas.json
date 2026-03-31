@@ -1,0 +1,38 @@
+{
+  "cli": {
+    "version": ">= 15.0.0",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "ios": {
+        "simulator": true
+      }
+    },
+    "production-ios": {
+      "autoIncrement": true,
+      "channel": "ios-prod",
+      "distribution": "store"
+    },
+    "production-android": {
+      "autoIncrement": true,
+      "channel": "android-prod",
+      "android": {
+        "buildType": "app-bundle"
+      }
+    }
+  },
+  "submit": {
+    "production-ios": {
+      "ios": {
+        "appleId": "contacto@walzustore.com",
+        "appleTeamId": "T48AT39AXA",
+        "ascApiKeyPath": "C:\\Users\\walzu\\Downloads\\AuthKey_A3LLHTM5DM.p8",
+        "ascApiKeyId": "A3LLHTM5DM",
+        "ascApiKeyIssuerId": "69763b07-7bfd-47e5-a4e8-010e39488edd"
+      }
+    }
+  }
+}
