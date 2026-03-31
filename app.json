@@ -29,6 +29,13 @@
         "backgroundColor": "#080B12"
       },
       "package": "com.punkytiger.thewatcher"
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "e66bafcc-c17d-4feb-b84e-c4debf86c444"
+      }
+    },
+    "owner": "punky-tiger-labs"
   }
 }
