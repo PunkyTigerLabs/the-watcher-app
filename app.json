@@ -21,7 +21,10 @@
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.punkytiger.thewatcher"
+      "bundleIdentifier": "com.punkytiger.thewatcher",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
