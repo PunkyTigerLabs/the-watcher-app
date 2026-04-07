@@ -5,6 +5,7 @@
 import fetch from 'node-fetch';
 import { API_CONFIG } from '../config';
 import { NewsItem, Sentiment, Token } from '../types';
+import { newsLimiter } from './rateLimiter';
 
 const { BASE_URL, API_KEY } = API_CONFIG.CRYPTOPANIC;
 
@@ -20,6 +21,7 @@ const RELEVANT_KEYWORDS = [
 /**
  * Fetch and filter news for stablecoin relevance.
  * INTEL must NOT be generic crypto news — filter aggressively.
+ * Uses improved sentiment scoring with weighted keywords.
  */
 export async function fetchFilteredNews(): Promise<NewsItem[]> {
   if (!API_KEY) {
@@ -27,7 +29,7 @@ export async function fetchFilteredNews(): Promise<NewsItem[]> {
     return [];
   }
 
-  try {
+  return await newsLimiter.execute('news', async () => {
     const url = `${BASE_URL}/posts/?auth_token=${API_KEY}` +
       `&currencies=USDC,USDT&kind=news&filter=important&public=true`;
 
@@ -42,23 +44,23 @@ export async function fetchFilteredNews(): Promise<NewsItem[]> {
     const items: NewsItem[] = data.results
       .filter((item: any) => isRelevant(item.title))
       .slice(0, 20) // Quality over quantity
-      .map((item: any) => ({
-        id: `news:${item.id || item.slug}`,
-        timestamp: item.published_at || new Date().toISOString(),
-        source: item.source?.title || 'Unknown',
-        title: item.title,
-        url: item.url,
-        sentiment: mapSentiment(item.votes),
-        relevantTokens: detectTokens(item.title),
-        score: calculateSentimentScore(item.votes),
-      }));
+      .map((item: any) => {
+        const sentimentScore = calculateWeightedSentiment(item.title);
+        return {
+          id: `news:${item.id || item.slug}`,
+          timestamp: item.published_at || new Date().toISOString(),
+          source: item.source?.title || 'Unknown',
+          title: item.title,
+          url: item.url,
+          sentiment: sentimentScoreToCategory(sentimentScore),
+          relevantTokens: detectTokens(item.title),
+          score: sentimentScore,
+        };
+      });
 
     console.log(`[News] Got ${items.length} relevant news items`);
     return items;
-  } catch (error) {
-    console.error('[News] Fetch error:', error);
-    return [];
-  }
+  });
 }
 
 function isRelevant(title: string): boolean {
@@ -75,6 +77,57 @@ function detectTokens(title: string): Token[] {
   return tokens;
 }
 
+// Weighted sentiment keywords
+const STRONG_NEGATIVE = ['crash', 'dump', 'hack', 'exploit', 'collapse', 'bankruptcy'];
+const MILD_NEGATIVE = ['dip', 'concern', 'risk', 'weakness', 'downside', 'trouble'];
+const STRONG_POSITIVE = ['surge', 'rally', 'bullish', 'moon', 'pump', 'soar'];
+const MILD_POSITIVE = ['growth', 'adoption', 'partnership', 'upgrade', 'strength'];
+
+/**
+ * Calculate weighted sentiment score based on keyword analysis.
+ * Strong negative: -2
+ * Mild negative: -1
+ * Mild positive: +1
+ * Strong positive: +2
+ * Returns score from -100 to +100
+ */
+function calculateWeightedSentiment(title: string): number {
+  const lower = title.toLowerCase();
+  let score = 0;
+
+  // Strong negatives (-2 each)
+  for (const kw of STRONG_NEGATIVE) {
+    if (lower.includes(kw)) score -= 2;
+  }
+
+  // Mild negatives (-1 each)
+  for (const kw of MILD_NEGATIVE) {
+    if (lower.includes(kw)) score -= 1;
+  }
+
+  // Mild positives (+1 each)
+  for (const kw of MILD_POSITIVE) {
+    if (lower.includes(kw)) score += 1;
+  }
+
+  // Strong positives (+2 each)
+  for (const kw of STRONG_POSITIVE) {
+    if (lower.includes(kw)) score += 2;
+  }
+
+  // Normalize to -100 to +100
+  return Math.round(Math.max(-100, Math.min(100, score * 10)));
+}
+
+/**
+ * Map weighted sentiment score to category.
+ */
+function sentimentScoreToCategory(score: number): Sentiment {
+  if (score > 20) return 'bullish';
+  if (score < -20) return 'bearish';
+  return 'neutral';
+}
+
 function mapSentiment(votes: any): Sentiment {
   if (!votes) return 'neutral';
   const positive = (votes.positive || 0) + (votes.important || 0);
@@ -82,13 +135,4 @@ function mapSentiment(votes: any): Sentiment {
   if (positive > negative * 1.5) return 'bullish';
   if (negative > positive * 1.5) return 'bearish';
   return 'neutral';
-}
-
-function calculateSentimentScore(votes: any): number {
-  if (!votes) return 0;
-  const positive = (votes.positive || 0) + (votes.important || 0);
-  const negative = (votes.negative || 0) + (votes.toxic || 0);
-  const total = positive + negative;
-  if (total === 0) return 0;
-  return Math.round(((positive - negative) / total) * 100);
 }

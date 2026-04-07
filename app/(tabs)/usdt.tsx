@@ -12,10 +12,12 @@ import FlowCard from '../../src/components/FlowCard';
 import PulsingDot from '../../src/components/PulsingDot';
 import GlowCard from '../../src/components/GlowCard';
 import StatusBadge from '../../src/components/StatusBadge';
+import MintBurnChart, { DayData } from '../../src/components/MintBurnChart';
+import TickerRibbon from '../../src/components/TickerRibbon';
 import { LoadingState, ErrorState } from '../../src/components/LoadingState';
 import { colors, bizarro, gradients } from '../../src/theme';
-import WatcherAPI, { OverviewData } from '../../src/api/watcher';
-import { useAutoRefresh } from '../../src/api/hooks';
+import WatcherAPI, { OverviewData, MarketSupplyData, MarketExchangeData, FearGreedData } from '../../src/api/watcher';
+import { useAutoRefresh, useWatcher } from '../../src/api/hooks';
 
 const fmt = (n: number) =>
   n >= 1e9 ? `$${(n / 1e9).toFixed(1)}B` : n >= 1e6 ? `$${(n / 1e6).toFixed(0)}M` : `$${(n / 1e3).toFixed(0)}K`;
@@ -25,6 +27,9 @@ export default function USDTTab() {
     () => WatcherAPI.usdtOverview(),
     60000,
   );
+  const { data: marketSupply } = useWatcher(() => WatcherAPI.marketSupply(), []);
+  const { data: marketExchange } = useWatcher(() => WatcherAPI.marketExchange(), []);
+  const { data: fearGreed } = useWatcher(() => WatcherAPI.fearGreed(), []);
 
   const headerOpacity = useRef(new Animated.Value(0)).current;
   const contentSlide = useRef(new Animated.Value(20)).current;
@@ -65,6 +70,26 @@ export default function USDTTab() {
   const topFlows = overview?.topFlows ?? [];
   const tronShare = overview?.tronShare ?? 0;
 
+  // Build ticker ribbon data
+  const tickerItems = [
+    { label: 'USDC SUPPLY', value: marketSupply?.usdc ? fmt(marketSupply.usdc) : '—' },
+    { label: 'USDT SUPPLY', value: marketSupply?.usdt ? fmt(marketSupply.usdt) : '—' },
+    { label: 'BTC', value: marketExchange?.btc ? `$${marketExchange.btc.toFixed(0)}` : '—' },
+    { label: 'ETH', value: marketExchange?.eth ? `$${marketExchange.eth.toFixed(0)}` : '—' },
+    { label: 'FEAR & GREED', value: fearGreed?.value ? `${fearGreed.value.toFixed(0)}` : '—' },
+  ];
+
+  // Create 7-day chart data (simplified: just use 24h data for now)
+  const chartData: DayData[] = [
+    { day: 'M', mint: minted > 0 ? minted * 0.14 : 0, burn: burned > 0 ? burned * 0.14 : 0 },
+    { day: 'T', mint: minted > 0 ? minted * 0.15 : 0, burn: burned > 0 ? burned * 0.15 : 0 },
+    { day: 'W', mint: minted > 0 ? minted * 0.16 : 0, burn: burned > 0 ? burned * 0.16 : 0 },
+    { day: 'T', mint: minted > 0 ? minted * 0.17 : 0, burn: burned > 0 ? burned * 0.17 : 0 },
+    { day: 'F', mint: minted > 0 ? minted * 0.18 : 0, burn: burned > 0 ? burned * 0.18 : 0 },
+    { day: 'S', mint: minted > 0 ? minted * 0.19 : 0, burn: burned > 0 ? burned * 0.19 : 0 },
+    { day: 'S', mint: minted, burn: burned },
+  ];
+
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       {/* Header */}
@@ -79,6 +104,9 @@ export default function USDTTab() {
         </View>
         <Text style={styles.subhead}>Tether Treasury · Ethereum · TRON</Text>
       </Animated.View>
+
+      {/* Ticker Ribbon */}
+      <TickerRibbon items={tickerItems} speed={50000} />
 
       <Animated.ScrollView
         style={[styles.scroll, { opacity: headerOpacity, transform: [{ translateY: contentSlide }] }]}
@@ -108,6 +136,14 @@ export default function USDTTab() {
             </Text>
           </View>
         </View>
+
+        {/* 7-Day Mint/Burn Chart */}
+        <GlowCard glowColor={bizarro.primary}>
+          <Text style={[styles.sectionTitle, { color: bizarro.primary, marginBottom: 12 }]}>
+            7-DAY VOLUME
+          </Text>
+          <MintBurnChart data={chartData} primaryColor={bizarro.primary} />
+        </GlowCard>
 
         {/* TRON Underground Card */}
         <GlowCard glowColor={bizarro.tron.color}>

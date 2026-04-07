@@ -7,6 +7,7 @@ import fetch from 'node-fetch';
 import { API_CONFIG, CONTRACTS } from '../config';
 import { EtherscanTransfer, Token, CanonicalEvent } from '../types';
 import { normalizeEtherscanBatch } from '../normalize/etherscan';
+import { etherscanLimiter } from './rateLimiter';
 
 const { BASE_URL, API_KEY } = API_CONFIG.ETHERSCAN;
 
@@ -18,7 +19,7 @@ interface EtherscanResponse {
 
 /**
  * Fetch recent token transfers for a given contract.
- * Uses Etherscan's tokentx endpoint.
+ * Uses Etherscan's tokentx endpoint with rate limiting.
  */
 async function fetchTokenTransfers(
   contractAddress: string,
@@ -31,12 +32,12 @@ async function fetchTokenTransfers(
     return [];
   }
 
-  const url = `${BASE_URL}?module=account&action=tokentx` +
-    `&contractaddress=${contractAddress}` +
-    `&page=${page}&offset=${offset}&sort=${sort}` +
-    `&apikey=${API_KEY}`;
+  return await etherscanLimiter.execute('etherscan', async () => {
+    const url = `${BASE_URL}?module=account&action=tokentx` +
+      `&contractaddress=${contractAddress}` +
+      `&page=${page}&offset=${offset}&sort=${sort}` +
+      `&apikey=${API_KEY}`;
 
-  try {
     const response = await fetch(url);
     const data = (await response.json()) as EtherscanResponse;
 
@@ -46,10 +47,7 @@ async function fetchTokenTransfers(
     }
 
     return data.result;
-  } catch (error) {
-    console.error('[Etherscan] Fetch error:', error);
-    return [];
-  }
+  });
 }
 
 /**
@@ -80,18 +78,15 @@ export async function fetchUSDTTransfersETH(): Promise<CanonicalEvent[]> {
 export async function fetchTokenSupply(contractAddress: string): Promise<number> {
   if (!API_KEY) return 0;
 
-  const url = `${BASE_URL}?module=stats&action=tokensupply` +
-    `&contractaddress=${contractAddress}` +
-    `&apikey=${API_KEY}`;
+  return await etherscanLimiter.execute('etherscan', async () => {
+    const url = `${BASE_URL}?module=stats&action=tokensupply` +
+      `&contractaddress=${contractAddress}` +
+      `&apikey=${API_KEY}`;
 
-  try {
     const response = await fetch(url);
     const data = (await response.json()) as { status: string; result: string };
 
     if (data.status !== '1') return 0;
     return parseFloat(data.result) / 1e6; // USDC/USDT have 6 decimals
-  } catch (error) {
-    console.error('[Etherscan] Supply fetch error:', error);
-    return 0;
-  }
+  });
 }

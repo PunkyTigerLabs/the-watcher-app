@@ -171,6 +171,22 @@ export interface WhaleWallet {
   lastSeen: string;
 }
 
+export interface PatternData {
+  patterns: PatternFlag[];
+}
+
+export interface MarketSupplyData {
+  usdc: number;
+  usdt: number;
+  timestamp: string;
+}
+
+export interface MarketExchangeData {
+  btc: number;
+  eth: number;
+  timestamp: string;
+}
+
 // ---- API Methods ----
 
 export const WatcherAPI = {
@@ -212,6 +228,15 @@ export const WatcherAPI = {
 
   // Analyst narrative (PRO)
   analyst: () => fetchApi<AnalystNarrative>('/analyst'),
+
+  // Patterns (PRO)
+  patterns: () => fetchApi<PatternData>('/signal/patterns'),
+
+  // Market supply (FREE)
+  marketSupply: () => fetchApi<MarketSupplyData>('/market/supply'),
+
+  // Market exchange rates (FREE)
+  marketExchange: () => fetchApi<MarketExchangeData>('/market/exchange'),
 };
 
 export default WatcherAPI;

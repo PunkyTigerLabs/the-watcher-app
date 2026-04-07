@@ -12,7 +12,7 @@ import StatusBadge from '../../src/components/StatusBadge';
 import PaywallGate from '../../src/components/PaywallGate';
 import { LoadingState, ErrorState } from '../../src/components/LoadingState';
 import { colors } from '../../src/theme';
-import WatcherAPI, { NewsItem, FearGreedData, AnalystNarrative } from '../../src/api/watcher';
+import WatcherAPI, { NewsItem, FearGreedData, AnalystNarrative, SignalData } from '../../src/api/watcher';
 import { useWatcher, useAutoRefresh } from '../../src/api/hooks';
 import { isPro } from '../../src/api/watcher';
 
@@ -40,6 +40,10 @@ export default function IntelTab() {
   );
   const { data: analyst, loading: analystLoading, refresh: refreshAnalyst } = useWatcher(
     () => WatcherAPI.analyst(),
+    [],
+  );
+  const { data: signal } = useWatcher(
+    () => WatcherAPI.signal(isPro()),
     [],
   );
 
@@ -71,6 +75,14 @@ export default function IntelTab() {
   const fgColor = fgValue !== null
     ? fgValue > 60 ? colors.green : fgValue > 40 ? colors.gold : colors.red
     : colors.muted;
+
+  // Determine narrative alignment
+  const signalScore = signal?.score ?? 0;
+  const isAligned = fgValue !== null && signalScore !== 0
+    ? (fgValue > 50 && signalScore > 0) || (fgValue <= 50 && signalScore < 0)
+    : null;
+  const alignmentColor = isAligned === true ? colors.green : isAligned === false ? colors.red : colors.muted;
+  const alignmentLabel = isAligned === true ? 'ALIGNED' : isAligned === false ? 'DIVERGED — money talks, news walks' : 'CALCULATING';
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
@@ -106,6 +118,31 @@ export default function IntelTab() {
                 <Text style={[styles.fgLabel, { color: fgColor }]}>{fgClass.toUpperCase()}</Text>
                 <Text style={[styles.fgLabel, { color: colors.green }]}>EXTREME GREED</Text>
               </View>
+            </GlowCard>
+          </PaywallGate>
+
+          {/* Narrative Alignment */}
+          <PaywallGate feature="sentiment alignment">
+            <GlowCard glowColor={alignmentColor}>
+              <View style={styles.alignmentHeader}>
+                <PulsingDot color={alignmentColor} size={4} />
+                <Text style={[styles.sectionTitle, { color: alignmentColor, marginBottom: 0 }]}>
+                  NARRATIVE ALIGNMENT
+                </Text>
+              </View>
+              <View style={styles.alignmentStatus}>
+                <View style={[styles.alignmentDot, { backgroundColor: alignmentColor }]} />
+                <Text style={[styles.alignmentText, { color: alignmentColor }]}>
+                  {alignmentLabel}
+                </Text>
+              </View>
+              <Text style={styles.alignmentDesc}>
+                {isAligned === true
+                  ? 'News sentiment and on-chain flows are moving in the same direction. Market consensus is strong.'
+                  : isAligned === false
+                  ? 'News and on-chain flows are diverging. On-chain activity suggests actual capital movement. Follow the money.'
+                  : 'Awaiting sufficient data to compare sentiment and signal.'}
+              </Text>
             </GlowCard>
           </PaywallGate>
 
@@ -333,5 +370,34 @@ const styles = StyleSheet.create({
     color: colors.muted,
     fontSize: 12,
     textAlign: 'center',
+  },
+
+  // Narrative Alignment
+  alignmentHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginBottom: 12,
+  },
+  alignmentStatus: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 12,
+  },
+  alignmentDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  alignmentText: {
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
+  alignmentDesc: {
+    color: colors.textSub,
+    fontSize: 12,
+    lineHeight: 18,
   },
 });

@@ -20,13 +20,27 @@ export default function PaywallGate({ children, feature = 'this feature' }: Prop
 
   return (
     <View style={styles.container}>
-      <View style={styles.blurredContent}>
+      <View style={styles.previewSection}>
         {children}
       </View>
+
+      <View style={styles.fadeOverlay}>
+        <LinearGradient
+          colors={['transparent', 'rgba(6,9,15,0.6)', 'rgba(6,9,15,1)']}
+          start={{ x: 0.5, y: 0 }}
+          end={{ x: 0.5, y: 1 }}
+          style={styles.gradientOverlay}
+        />
+      </View>
+
       <LinearGradient
-        colors={['rgba(6,9,15,0.5)', 'rgba(6,9,15,0.95)', 'rgba(6,9,15,1)']}
-        style={styles.overlay}
-      >
+        colors={['rgba(6,9,15,0)', 'rgba(6,9,15,0.4)', 'rgba(6,9,15,0.95)']}
+        start={{ x: 0, y: 0.5 }}
+        end={{ x: 1, y: 0.5 }}
+        style={styles.sideGradient}
+      />
+
+      <View style={styles.lockContainer}>
         <View style={styles.lockIcon}>
           <Text style={styles.lockEmoji}>⟐</Text>
         </View>
@@ -35,7 +49,7 @@ export default function PaywallGate({ children, feature = 'this feature' }: Prop
         <TouchableOpacity style={styles.button} activeOpacity={0.8}>
           <Text style={styles.buttonText}>UPGRADE — $30/mo</Text>
         </TouchableOpacity>
-      </LinearGradient>
+      </View>
     </View>
   );
 }
@@ -43,11 +57,37 @@ export default function PaywallGate({ children, feature = 'this feature' }: Prop
 const styles = StyleSheet.create({
   container: {
     position: 'relative',
+    overflow: 'hidden',
   },
-  blurredContent: {
-    opacity: 0.15,
+  previewSection: {
+    opacity: 0.2,
+    maxHeight: '20%',
+    overflow: 'hidden',
   },
-  overlay: {
+  fadeOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    pointerEvents: 'none',
+  },
+  gradientOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  sideGradient: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    pointerEvents: 'none',
+  },
+  lockContainer: {
     position: 'absolute',
     top: 0,
     left: 0,
@@ -58,18 +98,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 32,
   },
   lockIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: colors.green + '15',
-    borderWidth: 0.5,
-    borderColor: colors.green + '30',
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: colors.green + '08',
+    borderWidth: 1,
+    borderColor: colors.green + '40',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 16,
   },
   lockEmoji: {
-    fontSize: 22,
+    fontSize: 28,
     color: colors.green,
   },
   title: {
@@ -77,21 +117,21 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '800',
     letterSpacing: 2,
-    marginBottom: 6,
+    marginBottom: 8,
   },
   subtitle: {
     color: colors.textSub,
     fontSize: 12,
     textAlign: 'center',
-    marginBottom: 16,
+    marginBottom: 20,
   },
   button: {
-    backgroundColor: colors.green + '20',
-    borderWidth: 1,
-    borderColor: colors.green + '50',
-    borderRadius: 8,
-    paddingHorizontal: 24,
-    paddingVertical: 10,
+    backgroundColor: colors.green + '15',
+    borderWidth: 1.5,
+    borderColor: colors.green + '60',
+    borderRadius: 10,
+    paddingHorizontal: 28,
+    paddingVertical: 12,
   },
   buttonText: {
     color: colors.green,

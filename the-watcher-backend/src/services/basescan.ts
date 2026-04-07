@@ -7,6 +7,7 @@ import fetch from 'node-fetch';
 import { API_CONFIG, CONTRACTS } from '../config';
 import { EtherscanTransfer, CanonicalEvent } from '../types';
 import { normalizeEtherscanBatch } from '../normalize/etherscan';
+import { basescanLimiter } from './rateLimiter';
 
 const { BASE_URL, API_KEY } = API_CONFIG.BASESCAN;
 
@@ -28,12 +29,12 @@ export async function fetchUSDCTransfersBASE(): Promise<CanonicalEvent[]> {
 
   console.log('[Basescan] Fetching USDC transfers on BASE...');
 
-  const url = `${BASE_URL}?module=account&action=tokentx` +
-    `&contractaddress=${CONTRACTS.USDC.BASE}` +
-    `&page=1&offset=100&sort=desc` +
-    `&apikey=${API_KEY}`;
+  return await basescanLimiter.execute('basescan', async () => {
+    const url = `${BASE_URL}?module=account&action=tokentx` +
+      `&contractaddress=${CONTRACTS.USDC.BASE}` +
+      `&page=1&offset=100&sort=desc` +
+      `&apikey=${API_KEY}`;
 
-  try {
     const response = await fetch(url);
     const data = (await response.json()) as BasescanResponse;
 
@@ -45,8 +46,5 @@ export async function fetchUSDCTransfersBASE(): Promise<CanonicalEvent[]> {
     const events = normalizeEtherscanBatch(data.result, 'USDC', 'BASE', 'basescan');
     console.log(`[Basescan] Got ${events.length} USDC events from BASE`);
     return events;
-  } catch (error) {
-    console.error('[Basescan] Fetch error:', error);
-    return [];
-  }
+  });
 }

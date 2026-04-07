@@ -34,7 +34,9 @@ export function detectPatterns(): PatternFlag[] {
   const tronSurge = checkTronSurge(db);
   if (tronSurge) detectedPatterns.push(tronSurge);
 
-  // 5. DIVERGENCE FLIP — handled by signal engine
+  // 5. DIVERGENCE FLIP
+  const divergenceFlip = checkDivergenceFlip(db);
+  if (divergenceFlip) detectedPatterns.push(divergenceFlip);
 
   // 6. SUPPLY SHOCK
   const supplyShock = checkSupplyShock(db);
@@ -197,13 +199,24 @@ function checkSupplyContraction(db: any): PatternFlag | null {
 
 function checkWhaleCluster(db: any): PatternFlag | null {
   const since = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString();
+
+  // Count distinct wallet addresses (from_address or to_address) that have moved >= $50M
   const result = db.prepare(`
-    SELECT COUNT(DISTINCT from_entity || to_entity) as uniqueWhales
-    FROM events
-    WHERE timestamp >= ?
-      AND amount >= ?
-      AND (from_entity_type = 'Institutional' OR to_entity_type = 'Institutional')
-  `).get(since, THRESHOLDS.WHALE_CLUSTER_AMOUNT) as any;
+    SELECT COUNT(DISTINCT whale_address) as uniqueWhales
+    FROM (
+      SELECT from_address as whale_address, SUM(amount) as total FROM events
+      WHERE timestamp >= ? AND (from_entity_type = 'Institutional' OR to_entity_type = 'Institutional')
+      GROUP BY from_address
+      HAVING SUM(amount) >= ?
+
+      UNION ALL
+
+      SELECT to_address as whale_address, SUM(amount) as total FROM events
+      WHERE timestamp >= ? AND (from_entity_type = 'Institutional' OR to_entity_type = 'Institutional')
+      GROUP BY to_address
+      HAVING SUM(amount) >= ?
+    )
+  `).get(since, THRESHOLDS.WHALE_CLUSTER_AMOUNT, since, THRESHOLDS.WHALE_CLUSTER_AMOUNT) as any;
 
   if (result.uniqueWhales >= THRESHOLDS.WHALE_CLUSTER_COUNT) {
     return {
@@ -265,6 +278,83 @@ function checkRapidRelay(db: any): PatternFlag | null {
       active: true,
     };
   }
+  return null;
+}
+
+function checkDivergenceFlip(db: any): PatternFlag | null {
+  // Get the last saved signal to compare divergence
+  const lastSignal = db.prepare(`
+    SELECT usdc_subscore, usdt_subscore FROM signal_history
+    ORDER BY timestamp DESC LIMIT 1
+  `).get() as any;
+
+  if (!lastSignal) {
+    // No prior signal to compare against
+    return null;
+  }
+
+  // Get current 24h stats for USDC and USDT
+  const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+
+  const usdcStats = db.prepare(`
+    SELECT
+      COALESCE(SUM(CASE WHEN type = 'MINT' THEN amount ELSE 0 END), 0) as mints,
+      COALESCE(SUM(CASE WHEN type = 'BURN' THEN amount ELSE 0 END), 0) as burns
+    FROM events WHERE token = 'USDC' AND timestamp >= ?
+  `).get(since) as any;
+
+  const usdtStats = db.prepare(`
+    SELECT
+      COALESCE(SUM(CASE WHEN type = 'MINT' THEN amount ELSE 0 END), 0) as mints,
+      COALESCE(SUM(CASE WHEN type = 'BURN' THEN amount ELSE 0 END), 0) as burns
+    FROM events WHERE token = 'USDT' AND timestamp >= ?
+  `).get(since) as any;
+
+  // Calculate current subscores
+  const computeFlowScore = (mints: number, burns: number): number => {
+    const net = mints - burns;
+    const total = mints + burns;
+    if (total === 0) return 0;
+    const ratio = net / Math.max(total, 1);
+    return Math.round(Math.tanh(ratio * 2) * 100);
+  };
+
+  const currentUsdcScore = computeFlowScore(usdcStats.mints, usdcStats.burns);
+  const currentUsdtScore = computeFlowScore(usdtStats.mints, usdtStats.burns);
+
+  // Determine if sign flipped
+  const lastUsdcDir = lastSignal.usdc_subscore > 0 ? 'positive' : lastSignal.usdc_subscore < 0 ? 'negative' : 'neutral';
+  const lastUsdtDir = lastSignal.usdt_subscore > 0 ? 'positive' : lastSignal.usdt_subscore < 0 ? 'negative' : 'neutral';
+  const currentUsdcDir = currentUsdcScore > 0 ? 'positive' : currentUsdcScore < 0 ? 'negative' : 'neutral';
+  const currentUsdtDir = currentUsdtScore > 0 ? 'positive' : currentUsdtScore < 0 ? 'negative' : 'neutral';
+
+  // Check if either token's direction changed
+  const usdcFlipped = (lastUsdcDir !== 'neutral' && currentUsdcDir !== 'neutral' && lastUsdcDir !== currentUsdcDir) ||
+                      (lastUsdcDir === 'neutral' && currentUsdcDir !== 'neutral');
+  const usdtFlipped = (lastUsdtDir !== 'neutral' && currentUsdtDir !== 'neutral' && lastUsdtDir !== currentUsdtDir) ||
+                      (lastUsdtDir === 'neutral' && currentUsdtDir !== 'neutral');
+
+  // Check if they went from agreement to disagreement or vice versa
+  const lastAgreed = (lastUsdcDir === lastUsdtDir && lastUsdcDir !== 'neutral');
+  const currentAgreed = (currentUsdcDir === currentUsdtDir && currentUsdcDir !== 'neutral');
+
+  const divergenceFlipped = (lastAgreed && !currentAgreed) || (!lastAgreed && currentAgreed);
+
+  if (usdcFlipped || usdtFlipped || divergenceFlipped) {
+    const detail = divergenceFlipped
+      ? `USDC and USDT ${lastAgreed ? 'diverged' : 'converged'}`
+      : `${usdcFlipped ? 'USDC' : 'USDT'} flipped from ${usdcFlipped ? lastUsdcDir : lastUsdtDir} to ${usdcFlipped ? currentUsdcDir : currentUsdtDir}`;
+
+    return {
+      id: `divergence-flip-${Date.now()}`,
+      pattern: 'DIVERGENCE_FLIP',
+      severity: 'high',
+      message: `DIVERGENCE FLIP \u2014 ${detail}. Superman and Bizarro changing moves.`,
+      timestamp: new Date().toISOString(),
+      active: true,
+    };
+  }
+
   return null;
 }
 

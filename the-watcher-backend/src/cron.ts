@@ -4,16 +4,19 @@
 // Scheduled tasks that poll APIs and update data
 
 import cron from 'node-cron';
-import { CRON_INTERVALS } from './config';
 import { insertEvents, saveSnapshot, insertNews } from './db';
 import { fetchUSDCTransfersETH, fetchUSDTTransfersETH, fetchTokenSupply } from './services/etherscan';
 import { fetchUSDCTransfersBASE } from './services/basescan';
 import { fetchUSDTTransfersTRON } from './services/trongrid';
+import { fetchUSDCTransfersSOLANA } from './services/solana';
 import { fetchFilteredNews } from './services/news';
 import { fetchFearGreed } from './services/feargreed';
+import { fetchSupplyData } from './services/coingecko';
+import { fetchStablecoinSupplyByChain, fetchStablecoinTVLByChain } from './services/defillama';
+import { fetchExchangeData } from './services/binance';
 import { computeSignal } from './engine/signal';
 import { detectPatterns } from './engine/patterns';
-import { CONTRACTS } from './config';
+import { CONTRACTS, CRON_INTERVALS } from './config';
 
 let fearGreedValue: number | null = null;
 
@@ -25,9 +28,10 @@ export function startCronJobs() {
     console.log('[Cron] Fetching events...');
     try {
       // Fetch all sources in parallel
-      const [usdcEth, usdcBase, usdtEth, usdtTron] = await Promise.allSettled([
+      const [usdcEth, usdcBase, usdcSolana, usdtEth, usdtTron] = await Promise.allSettled([
         fetchUSDCTransfersETH(),
         fetchUSDCTransfersBASE(),
+        fetchUSDCTransfersSOLANA(),
         fetchUSDTTransfersETH(),
         fetchUSDTTransfersTRON(),
       ]);
@@ -44,6 +48,12 @@ export function startCronJobs() {
         totalInserted += insertEvents(usdcBase.value);
       } else {
         console.error('[Cron] USDC BASE failed:', usdcBase.reason);
+      }
+
+      if (usdcSolana.status === 'fulfilled') {
+        totalInserted += insertEvents(usdcSolana.value);
+      } else {
+        console.error('[Cron] USDC Solana failed:', usdcSolana.reason);
       }
 
       if (usdtEth.status === 'fulfilled') {
@@ -122,6 +132,7 @@ export function startCronJobs() {
 
   // ---- SUPPLY: Every 15 minutes ----
   cron.schedule(CRON_INTERVALS.SUPPLY, async () => {
+    console.log('[Cron] Fetching supply data...');
     try {
       const [usdcSupplyEth, usdtSupplyEth] = await Promise.allSettled([
         fetchTokenSupply(CONTRACTS.USDC.ETH),
@@ -138,6 +149,53 @@ export function startCronJobs() {
       });
     } catch (error) {
       console.error('[Cron] Supply error:', error);
+    }
+  });
+
+  // ---- COINGECKO: Every 15 minutes ----
+  cron.schedule(CRON_INTERVALS.COINGECKO, async () => {
+    console.log('[Cron] Fetching CoinGecko data...');
+    try {
+      const data = await fetchSupplyData();
+      saveSnapshot('coingecko_supply', {
+        ...data,
+        updatedAt: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error('[Cron] CoinGecko error:', error);
+    }
+  });
+
+  // ---- DEFILLAMA: Every 30 minutes ----
+  cron.schedule(CRON_INTERVALS.DEFILLAMA, async () => {
+    console.log('[Cron] Fetching DefiLlama data...');
+    try {
+      const [supply, chainTVL] = await Promise.allSettled([
+        fetchStablecoinSupplyByChain(),
+        fetchStablecoinTVLByChain(),
+      ]);
+
+      let data: any = { updatedAt: new Date().toISOString() };
+      if (supply.status === 'fulfilled') data.supply = supply.value;
+      if (chainTVL.status === 'fulfilled') data.chainTVL = chainTVL.value;
+
+      saveSnapshot('defillama_supply', data);
+    } catch (error) {
+      console.error('[Cron] DefiLlama error:', error);
+    }
+  });
+
+  // ---- BINANCE: Every 5 minutes ----
+  cron.schedule(CRON_INTERVALS.BINANCE, async () => {
+    console.log('[Cron] Fetching Binance data...');
+    try {
+      const data = await fetchExchangeData();
+      saveSnapshot('binance_exchange', {
+        ...data,
+        updatedAt: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error('[Cron] Binance error:', error);
     }
   });
 
@@ -159,9 +217,10 @@ export function startCronJobs() {
 
     // Then events
     try {
-      const [usdcEth, usdcBase, usdtEth, usdtTron] = await Promise.allSettled([
+      const [usdcEth, usdcBase, usdcSolana, usdtEth, usdtTron] = await Promise.allSettled([
         fetchUSDCTransfersETH(),
         fetchUSDCTransfersBASE(),
+        fetchUSDCTransfersSOLANA(),
         fetchUSDTTransfersETH(),
         fetchUSDTTransfersTRON(),
       ]);
@@ -169,6 +228,7 @@ export function startCronJobs() {
       let total = 0;
       if (usdcEth.status === 'fulfilled') total += insertEvents(usdcEth.value);
       if (usdcBase.status === 'fulfilled') total += insertEvents(usdcBase.value);
+      if (usdcSolana.status === 'fulfilled') total += insertEvents(usdcSolana.value);
       if (usdtEth.status === 'fulfilled') total += insertEvents(usdtEth.value);
       if (usdtTron.status === 'fulfilled') total += insertEvents(usdtTron.value);
       console.log(`[Cron] Initial fetch complete. ${total} events inserted.`);

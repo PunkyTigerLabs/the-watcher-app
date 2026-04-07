@@ -7,7 +7,7 @@ dotenv.config();
 
 // Supported assets and chains — nothing implicit
 export const SUPPORTED_ASSETS = {
-  USDC: ['ETH', 'BASE'] as const,
+  USDC: ['ETH', 'BASE', 'solana'] as const,
   USDT: ['ETH', 'TRON'] as const,
 } as const;
 
@@ -16,6 +16,7 @@ export const CONTRACTS = {
   USDC: {
     ETH: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
     BASE: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
+    SOLANA: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
   },
   USDT: {
     ETH: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
@@ -70,6 +71,10 @@ export const CRON_INTERVALS = {
   SUPPLY: '*/15 * * * *',         // Every 15 minutes
   FEAR_GREED: '0 * * * *',        // Every hour
   SNAPSHOT: '*/5 * * * *',        // Every 5 min — save state for fallback
+  SOLANA: '*/5 * * * *',          // Every 5 minutes
+  COINGECKO: '*/15 * * * *',      // Every 15 minutes
+  DEFILLAMA: '*/30 * * * *',      // Every 30 minutes
+  BINANCE: '*/5 * * * *',         // Every 5 minutes
 } as const;
 
 // API configuration
@@ -89,6 +94,10 @@ export const API_CONFIG = {
     API_KEY: process.env.TRONGRID_API_KEY || '',
     RATE_LIMIT: 15,
   },
+  SOLSCAN: {
+    BASE_URL: 'https://public-api.solscan.io',
+    RATE_LIMIT: 10,
+  },
   CRYPTOPANIC: {
     BASE_URL: 'https://cryptopanic.com/api/v1',
     API_KEY: process.env.CRYPTOPANIC_API_KEY || '',
@@ -98,6 +107,13 @@ export const API_CONFIG = {
   },
   COINGECKO: {
     BASE_URL: 'https://api.coingecko.com/api/v3',
+  },
+  DEFILLAMA: {
+    BASE_URL: 'https://stablecoins.llama.fi',
+  },
+  BINANCE: {
+    BASE_URL: 'https://api.binance.com/api/v3',
+    RATE_LIMIT: 1200, // per minute
   },
 } as const;
 

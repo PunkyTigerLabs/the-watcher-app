@@ -4,6 +4,7 @@
 
 import fetch from 'node-fetch';
 import { API_CONFIG } from '../config';
+import { feargreedLimiter } from './rateLimiter';
 
 export interface FearGreedData {
   value: number;
@@ -13,10 +14,10 @@ export interface FearGreedData {
 
 /**
  * Fetch current Fear & Greed index from Alternative.me.
- * Free, no API key needed.
+ * Free, no API key needed. Uses rate limiting and retry logic.
  */
 export async function fetchFearGreed(): Promise<FearGreedData | null> {
-  try {
+  return await feargreedLimiter.execute('feargreed', async () => {
     const url = `${API_CONFIG.FEAR_GREED.BASE_URL}/?limit=1&format=json`;
     const response = await fetch(url);
     const data = (await response.json()) as any;
@@ -32,8 +33,5 @@ export async function fetchFearGreed(): Promise<FearGreedData | null> {
       classification: entry.value_classification,
       timestamp: new Date(parseInt(entry.timestamp) * 1000).toISOString(),
     };
-  } catch (error) {
-    console.error('[FearGreed] Fetch error:', error);
-    return null;
-  }
+  });
 }

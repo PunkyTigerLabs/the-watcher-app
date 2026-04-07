@@ -7,6 +7,7 @@ import fetch from 'node-fetch';
 import { API_CONFIG, CONTRACTS } from '../config';
 import { TronGridTransfer, CanonicalEvent } from '../types';
 import { normalizeTronBatch } from '../normalize/trongrid';
+import { trongridLimiter } from './rateLimiter';
 
 const { BASE_URL, API_KEY } = API_CONFIG.TRONGRID;
 
@@ -23,57 +24,64 @@ interface TronGridResponse {
 /**
  * Fetch recent USDT TRC-20 transfers on TRON.
  * TronGrid uses a different API format than Etherscan.
+ * Tries primary endpoint first, falls back to account-based endpoint.
  */
 export async function fetchUSDTTransfersTRON(): Promise<CanonicalEvent[]> {
   console.log('[TronGrid] Fetching USDT transfers on TRON...');
 
-  const headers: Record<string, string> = {
-    'Accept': 'application/json',
-  };
+  return await trongridLimiter.execute('trongrid', async () => {
+    const headers: Record<string, string> = {
+      'Accept': 'application/json',
+    };
 
-  if (API_KEY) {
-    headers['TRON-PRO-API-KEY'] = API_KEY;
-  }
-
-  try {
-    // Fetch TRC-20 transfers for the USDT contract
-    // We query the contract's transfer events
-    const url = `${BASE_URL}/v1/contracts/${CONTRACTS.USDT.TRON}/events` +
-      `?event_name=Transfer&order_by=block_timestamp,desc&limit=100`;
-
-    const response = await fetch(url, { headers });
-    const data = (await response.json()) as any;
-
-    if (!data.data || !Array.isArray(data.data)) {
-      console.warn('[TronGrid] Unexpected response format');
-
-      // Fallback: try the account-based TRC20 transfer endpoint
-      return await fetchUSDTViaAccountEndpoint(headers);
+    if (API_KEY) {
+      headers['TRON-PRO-API-KEY'] = API_KEY;
     }
 
-    // TronGrid event format needs special handling
-    const transfers: TronGridTransfer[] = data.data.map((event: any) => ({
-      transaction_id: event.transaction_id,
-      block_timestamp: event.block_timestamp,
-      from: event.result?.from || event.result?._from || '',
-      to: event.result?.to || event.result?._to || '',
-      value: event.result?.value || event.result?._value || '0',
-      type: 'Transfer',
-      token_info: {
-        symbol: 'USDT',
-        address: CONTRACTS.USDT.TRON,
-        decimals: 6,
-        name: 'Tether USD',
-      },
-    }));
+    try {
+      // Primary: Fetch TRC-20 transfers for the USDT contract via events endpoint
+      const url = `${BASE_URL}/v1/contracts/${CONTRACTS.USDT.TRON}/events` +
+        `?event_name=Transfer&order_by=block_timestamp,desc&limit=100`;
 
-    const events = normalizeTronBatch(transfers);
-    console.log(`[TronGrid] Got ${events.length} USDT events from TRON`);
-    return events;
-  } catch (error) {
-    console.error('[TronGrid] Fetch error:', error);
-    return [];
-  }
+      const response = await fetch(url, { headers });
+      const data = (await response.json()) as any;
+
+      if (data.data && Array.isArray(data.data) && data.data.length > 0) {
+        // TronGrid event format needs special handling
+        const transfers: TronGridTransfer[] = data.data.map((event: any) => ({
+          transaction_id: event.transaction_id,
+          block_timestamp: event.block_timestamp,
+          from: event.result?.from || event.result?._from || '',
+          to: event.result?.to || event.result?._to || '',
+          value: event.result?.value || event.result?._value || '0',
+          type: 'Transfer',
+          token_info: {
+            symbol: 'USDT',
+            address: CONTRACTS.USDT.TRON,
+            decimals: 6,
+            name: 'Tether USD',
+          },
+        }));
+
+        const events = normalizeTronBatch(transfers);
+        console.log(`[TronGrid] Got ${events.length} USDT events from TRON (primary endpoint)`);
+        return events;
+      }
+
+      // Fallback: try the account-based TRC20 transfer endpoint
+      console.log('[TronGrid] Primary endpoint failed, trying fallback...');
+      return await fetchUSDTViaAccountEndpoint(headers);
+    } catch (error) {
+      console.error('[TronGrid] Primary fetch error:', error);
+      // Try fallback on error
+      try {
+        return await fetchUSDTViaAccountEndpoint({});
+      } catch (fallbackError) {
+        console.error('[TronGrid] Fallback also failed:', fallbackError);
+        return [];
+      }
+    }
+  });
 }
 
 /**

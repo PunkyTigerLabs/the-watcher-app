@@ -4,12 +4,12 @@
 // EVERY service, endpoint, and UI component speaks this language.
 
 export type Token = 'USDC' | 'USDT';
-export type Chain = 'ETH' | 'BASE' | 'TRON';
+export type Chain = 'ETH' | 'BASE' | 'TRON' | 'solana';
 export type EventType = 'MINT' | 'BURN' | 'TRANSFER';
 export type EntityType = 'Treasury' | 'CEX' | 'Institutional' | 'DeFi' | 'Bridge' | 'Unknown';
 export type Relevance = 'critical' | 'high' | 'medium' | 'low';
-export type DataSource = 'etherscan' | 'basescan' | 'trongrid';
-export type PatternSeverity = 'alert' | 'watch' | 'info';
+export type DataSource = 'etherscan' | 'basescan' | 'trongrid' | 'solscan';
+export type PatternSeverity = 'alert' | 'watch' | 'info' | 'high';
 export type Sentiment = 'bullish' | 'bearish' | 'neutral';
 export type SignalLabel =
   | 'STRONG ACCUMULATION'

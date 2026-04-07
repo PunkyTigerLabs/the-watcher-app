@@ -86,54 +86,102 @@ export function computeSignal(
 }
 
 /**
- * Flow subscore: based on net mint/burn ratio.
- * Minting > burning = positive (accumulation)
- * Burning > minting = negative (distribution)
+ * Flow subscore: improved with transaction count, volume, and large move direction.
+ * Factors:
+ * - Net mint/burn ratio (40%)
+ * - Transaction count significance (30%)
+ * - Large moves (>$10M) direction (30%)
  */
 function computeFlowSubscore(mints: number, burns: number): number {
+  const db = getDb();
+  const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+
+  // Get detailed event stats
+  const stats = db.prepare(`
+    SELECT
+      COUNT(*) as eventCount,
+      COALESCE(SUM(CASE WHEN type = 'MINT' THEN 1 ELSE 0 END), 0) as mintCount,
+      COALESCE(SUM(CASE WHEN type = 'BURN' THEN 1 ELSE 0 END), 0) as burnCount,
+      COALESCE(SUM(amount), 0) as totalVolume,
+      COALESCE(SUM(CASE WHEN type = 'MINT' AND amount >= 10000000 THEN amount ELSE 0 END), 0) as largeMints,
+      COALESCE(SUM(CASE WHEN type = 'BURN' AND amount >= 10000000 THEN amount ELSE 0 END), 0) as largeBurns
+    FROM events WHERE timestamp >= ?
+  `).get(since) as any;
+
+  // 1. Net mint/burn ratio (40%)
   const net = mints - burns;
   const total = mints + burns;
+  let ratioScore = 0;
+  if (total > 0) {
+    const ratio = net / Math.max(total, 1);
+    ratioScore = Math.tanh(ratio * 2) * 100;
+  }
 
-  if (total === 0) return 0;
+  // 2. Transaction count significance (30%)
+  let countScore = 0;
+  const eventCount = stats.eventCount || 0;
+  const avgCountPerDay = 50; // Baseline
+  if (eventCount > 0) {
+    // More transactions = stronger signal
+    const countRatio = Math.min(eventCount / Math.max(avgCountPerDay, 1), 2);
+    countScore = Math.tanh((countRatio - 1) * 1.5) * 100;
+  }
 
-  // Normalize to -100 to +100 range
-  // Using a sigmoid-like curve to avoid extreme values from single events
-  const ratio = net / Math.max(total, 1);
-  const score = Math.tanh(ratio * 2) * 100;
+  // 3. Large moves (>$10M) direction (30%)
+  let largeScore = 0;
+  const largeMintSum = stats.largeMints || 0;
+  const largeBurnSum = stats.largeBurns || 0;
+  const largeNet = largeMintSum - largeBurnSum;
+  const largeTotal = largeMintSum + largeBurnSum;
+  if (largeTotal > 0) {
+    const largeRatio = largeNet / Math.max(largeTotal, 1);
+    largeScore = Math.tanh(largeRatio * 2) * 100;
+  }
 
-  return Math.round(score);
+  // Weighted combination
+  const score = (ratioScore * 0.40) + (countScore * 0.30) + (largeScore * 0.30);
+  return Math.round(Math.max(-100, Math.min(100, score)));
 }
 
 /**
- * Whale subscore: based on large institutional transfers.
+ * Whale subscore: improved with CEX inflows/outflows + institutional tracking.
+ * - CEX inflows = bearish (selling pressure)
+ * - CEX outflows = bullish (accumulation)
+ * - Institutional moves tracked and weighted separately
  */
 function computeWhaleSubscore(): number {
   const db = getDb();
   const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 
-  // Count large transfers from/to institutional/CEX wallets
-  const result = db.prepare(`
+  // CEX flows: inflows (negative) and outflows (positive)
+  const cexFlows = db.prepare(`
     SELECT
-      COALESCE(SUM(CASE
-        WHEN to_entity_type IN ('CEX') THEN -amount
-        WHEN from_entity_type IN ('CEX') THEN amount
-        WHEN to_entity_type IN ('Institutional') THEN amount
-        WHEN from_entity_type IN ('Institutional') THEN -amount
-        ELSE 0
-      END), 0) as netDirection,
-      COUNT(*) as count
+      COALESCE(SUM(CASE WHEN to_entity_type = 'CEX' THEN -amount ELSE 0 END), 0) as inflows,
+      COALESCE(SUM(CASE WHEN from_entity_type = 'CEX' THEN amount ELSE 0 END), 0) as outflows,
+      COUNT(*) as cexCount
     FROM events
-    WHERE timestamp >= ?
-      AND amount >= 10000000
-      AND (from_entity_type IN ('Institutional', 'CEX')
-        OR to_entity_type IN ('Institutional', 'CEX'))
+    WHERE timestamp >= ? AND amount >= 10000000
   `).get(since) as any;
 
-  if (result.count === 0) return 0;
+  // Institutional flows
+  const instFlows = db.prepare(`
+    SELECT
+      COALESCE(SUM(CASE WHEN to_entity_type = 'Institutional' THEN amount ELSE 0 END), 0) as inflows,
+      COALESCE(SUM(CASE WHEN from_entity_type = 'Institutional' THEN -amount ELSE 0 END), 0) as outflows,
+      COUNT(*) as instCount
+    FROM events
+    WHERE timestamp >= ? AND amount >= 10000000
+  `).get(since) as any;
 
-  // Normalize: money TO exchanges = distribution, FROM exchanges = accumulation
-  const score = Math.tanh(result.netDirection / 500_000_000) * 100;
-  return Math.round(score);
+  const netCex = (cexFlows.outflows || 0) + (cexFlows.inflows || 0);
+  const netInst = (instFlows.inflows || 0) + (instFlows.outflows || 0);
+
+  // Weight: CEX is more predictive of short-term (70%), institutions longer-term (30%)
+  const cexScore = Math.tanh(netCex / 300_000_000) * 100;
+  const instScore = Math.tanh(netInst / 400_000_000) * 100;
+
+  const score = (cexScore * 0.70) + (instScore * 0.30);
+  return Math.round(Math.max(-100, Math.min(100, score)));
 }
 
 /**

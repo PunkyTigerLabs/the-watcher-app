@@ -15,7 +15,7 @@ import StatusBadge from '../../src/components/StatusBadge';
 import PaywallGate from '../../src/components/PaywallGate';
 import { LoadingState, ErrorState } from '../../src/components/LoadingState';
 import { colors, gradients } from '../../src/theme';
-import WatcherAPI, { SignalData, SignalHistoryPoint } from '../../src/api/watcher';
+import WatcherAPI, { SignalData, SignalHistoryPoint, PatternData } from '../../src/api/watcher';
 import { useAutoRefresh, useWatcher } from '../../src/api/hooks';
 import { isPro } from '../../src/api/watcher';
 
@@ -37,6 +37,14 @@ const SUBSCORES = [
   { key: 'sentiment' as const, label: 'Sentiment', weight: '10%', icon: '◈', color: '#A78BFA' },
 ];
 
+const SEVERITY_COLORS: Record<string, string> = {
+  critical: colors.red,
+  high: '#FF6B35',
+  medium: colors.gold,
+  low: colors.muted,
+  info: colors.cyan,
+};
+
 export default function SignalTab() {
   const { data: signal, loading, error, refresh } = useAutoRefresh<SignalData>(
     () => WatcherAPI.signal(isPro()),
@@ -44,6 +52,10 @@ export default function SignalTab() {
   );
   const { data: historyData } = useWatcher(
     () => WatcherAPI.signalHistory(30),
+    [],
+  );
+  const { data: patternData } = useWatcher(
+    () => WatcherAPI.patterns(),
     [],
   );
 
@@ -169,6 +181,37 @@ export default function SignalTab() {
                     <Text style={styles.decisionText}>{line}</Text>
                   </View>
                 ))}
+              </GlowCard>
+            </PaywallGate>
+          )}
+
+          {/* Active Patterns (PRO) */}
+          {patternData && patternData.patterns && patternData.patterns.length > 0 && (
+            <PaywallGate feature="active patterns">
+              <GlowCard glowColor={colors.cyan}>
+                <View style={styles.patternsHeader}>
+                  <PulsingDot color={colors.cyan} size={4} />
+                  <Text style={[styles.sectionTitle, { color: colors.cyan, marginBottom: 0 }]}>
+                    ACTIVE PATTERNS
+                  </Text>
+                </View>
+                {patternData.patterns.map((pattern, i) => {
+                  const severityColor = SEVERITY_COLORS[pattern.severity] || colors.muted;
+                  return (
+                    <View key={pattern.id || i} style={styles.patternRow}>
+                      <View style={[styles.severityBadge, { backgroundColor: severityColor + '15' }]}>
+                        <Text style={[styles.severityText, { color: severityColor }]}>
+                          {pattern.severity.toUpperCase().slice(0, 3)}
+                        </Text>
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.patternName}>{pattern.name}</Text>
+                        <Text style={styles.patternDesc}>{pattern.description}</Text>
+                      </View>
+                      <Text style={styles.patternTime}>{getTimeAgo(pattern.detectedAt)}</Text>
+                    </View>
+                  );
+                })}
               </GlowCard>
             </PaywallGate>
           )}
@@ -312,4 +355,45 @@ const styles = StyleSheet.create({
   zoneLabel: { fontSize: 11, fontWeight: '700', letterSpacing: 0.5 },
   zoneDesc: { color: colors.muted, fontSize: 10, marginTop: 1 },
   zoneRange: { color: colors.muted, fontSize: 10, fontVariant: ['tabular-nums'] },
+
+  patternsHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginBottom: 12,
+  },
+  patternRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingVertical: 10,
+    borderBottomWidth: 0.5,
+    borderBottomColor: colors.border,
+  },
+  severityBadge: {
+    borderRadius: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  severityText: {
+    fontSize: 8,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
+  patternName: {
+    color: colors.text,
+    fontSize: 12,
+    fontWeight: '700',
+    marginBottom: 2,
+  },
+  patternDesc: {
+    color: colors.textSub,
+    fontSize: 11,
+    lineHeight: 15,
+  },
+  patternTime: {
+    color: colors.muted,
+    fontSize: 10,
+    fontVariant: ['tabular-nums'],
+  },
 });
