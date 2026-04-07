@@ -70,14 +70,19 @@ export class WatcherError extends Error {
 // ---- Types ----
 
 export interface OverviewData {
-  headline: string;
-  subHeadline: string;
+  headline?: string;
+  subHeadline?: string;
   minted24h: number;
   burned24h: number;
   net24h: number;
   eventCount: number;
   topFlows: FlowItem[];
   tronShare?: number;
+  chartData?: { day: string; mint: number; burn: number }[];
+  stats?: {
+    totalSupply?: number;
+  };
+  lastUpdated?: string;
 }
 
 export interface FlowItem {
@@ -87,8 +92,10 @@ export interface FlowItem {
   amount: number;
   from: string;
   fromLabel: string | null;
+  from_entity_type?: string;
   to: string;
   toLabel: string | null;
+  to_entity_type?: string;
   chain: string;
   timestamp: string;
   relevance: string;

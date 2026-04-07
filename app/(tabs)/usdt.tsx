@@ -65,10 +65,16 @@ export default function USDTTab() {
   const minted = overview?.minted24h ?? 0;
   const burned = overview?.burned24h ?? 0;
   const net = overview?.net24h ?? 0;
-  const headline = overview?.headline ?? 'USDT Capital Flow Intelligence';
-  const subHeadline = overview?.subHeadline ?? 'Monitoring Tether Treasury activity';
+
+  const headline = overview?.headline ?? (
+    net >= 0
+      ? `Net ${fmt(Math.abs(net))} printed in 24h`
+      : `Net ${fmt(Math.abs(net))} burned in 24h`
+  );
+  const subHeadline = overview?.subHeadline ?? 'Tracking real-time stablecoin flows';
   const topFlows = overview?.topFlows ?? [];
   const tronShare = overview?.tronShare ?? 0;
+  const totalSupply = overview?.stats?.totalSupply ?? 0;
 
   // Build ticker ribbon data
   const tickerItems = [
@@ -79,8 +85,8 @@ export default function USDTTab() {
     { label: 'FEAR & GREED', value: fearGreed?.value ? `${fearGreed.value.toFixed(0)}` : '—' },
   ];
 
-  // Create 7-day chart data (simplified: just use 24h data for now)
-  const chartData: DayData[] = [
+  // Create 7-day chart data: use backend chartData if available, otherwise fallback to generated data
+  const chartData: DayData[] = overview?.chartData ?? [
     { day: 'M', mint: minted > 0 ? minted * 0.14 : 0, burn: burned > 0 ? burned * 0.14 : 0 },
     { day: 'T', mint: minted > 0 ? minted * 0.15 : 0, burn: burned > 0 ? burned * 0.15 : 0 },
     { day: 'W', mint: minted > 0 ? minted * 0.16 : 0, burn: burned > 0 ? burned * 0.16 : 0 },
@@ -97,7 +103,7 @@ export default function USDTTab() {
         <View style={styles.logoRow}>
           <PulsingDot color={bizarro.primary} size={6} />
           <Text style={styles.logo}>USDT</Text>
-          <StatusBadge status={overview ? 'LIVE' : 'DEMO'} />
+          <StatusBadge lastUpdated={overview?.lastUpdated} />
           <View style={styles.bizarroBadge}>
             <Text style={styles.bizarroText}>BIZARRO</Text>
           </View>
@@ -137,6 +143,18 @@ export default function USDTTab() {
           </View>
         </View>
 
+        {/* Total Supply Display */}
+        {totalSupply > 0 && (
+          <View style={styles.statsRow}>
+            <View style={[styles.statCard, { flex: 1 }]}>
+              <Text style={styles.statLabel}>TOTAL SUPPLY</Text>
+              <Text style={[styles.statValue, { color: bizarro.primary }]}>
+                ${(totalSupply / 1e9).toFixed(1)}B
+              </Text>
+            </View>
+          </View>
+        )}
+
         {/* 7-Day Mint/Burn Chart */}
         <GlowCard glowColor={bizarro.primary}>
           <Text style={[styles.sectionTitle, { color: bizarro.primary, marginBottom: 12 }]}>
@@ -174,17 +192,7 @@ export default function USDTTab() {
               <FlowCard
                 key={f.txHash || i}
                 name={f.fromLabel || f.toLabel || f.from.slice(0, 10)}
-                type={
-                  (f.fromLabel || f.toLabel || '')
-                    .toLowerCase()
-                    .includes('binance') || (f.fromLabel || f.toLabel || '').toLowerCase().includes('okx')
-                    ? 'CEX'
-                    : (f.fromLabel || f.toLabel || '').toLowerCase().includes('tether') || (f.fromLabel || f.toLabel || '').toLowerCase().includes('jump')
-                    ? 'Institutional'
-                    : (f.fromLabel || f.toLabel || '').toLowerCase().includes('justlend') || (f.fromLabel || f.toLabel || '').toLowerCase().includes('sun')
-                    ? 'DeFi'
-                    : 'Unknown'
-                }
+                type={getEntityType(f)}
                 chain={f.chain.toUpperCase()}
                 amount={f.amount}
                 timeAgo={getTimeAgo(f.timestamp)}
@@ -216,6 +224,19 @@ function getTimeAgo(timestamp: string): string {
   const hours = Math.floor(mins / 60);
   if (hours < 24) return `${hours}h`;
   return `${Math.floor(hours / 24)}d`;
+}
+
+function getEntityType(flow: any): string {
+  // Prefer entity_type fields from API if available
+  const entityType = flow.from_entity_type || flow.to_entity_type;
+  if (entityType) return entityType;
+
+  // Fallback to string matching for compatibility
+  const label = (flow.fromLabel || flow.toLabel || '').toLowerCase();
+  if (label.includes('binance') || label.includes('okx')) return 'CEX';
+  if (label.includes('tether') || label.includes('jump')) return 'Institutional';
+  if (label.includes('justlend') || label.includes('sun')) return 'DeFi';
+  return 'Unknown';
 }
 
 const styles = StyleSheet.create({

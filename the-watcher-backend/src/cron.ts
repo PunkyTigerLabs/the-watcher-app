@@ -140,8 +140,16 @@ export function startCronJobs() {
       ]);
 
       const supplies: Record<string, number> = {};
-      if (usdcSupplyEth.status === 'fulfilled') supplies.usdc_eth = usdcSupplyEth.value;
-      if (usdtSupplyEth.status === 'fulfilled') supplies.usdt_eth = usdtSupplyEth.value;
+      if (usdcSupplyEth.status === 'fulfilled') {
+        supplies.usdc_eth = usdcSupplyEth.value;
+        // Save USDC supply snapshot for routes to fetch
+        saveSnapshot('supply_usdc', { totalSupply: usdcSupplyEth.value, updatedAt: new Date().toISOString() });
+      }
+      if (usdtSupplyEth.status === 'fulfilled') {
+        supplies.usdt_eth = usdtSupplyEth.value;
+        // Save USDT supply snapshot for routes to fetch
+        saveSnapshot('supply_usdt', { totalSupply: usdtSupplyEth.value, updatedAt: new Date().toISOString() });
+      }
 
       saveSnapshot('supply', {
         ...supplies,

@@ -76,7 +76,7 @@ function checkTreasuryActivation(db: any): PatternFlag | null {
 
   if (result.total >= THRESHOLDS.CRITICAL_AMOUNT) {
     return {
-      id: `treasury-activation-${Date.now()}`,
+      id: `treasury-activation-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       pattern: 'TREASURY_ACTIVATION',
       severity: 'alert',
       message: `TREASURY ACTIVE \u2014 $${formatM(result.total)} in treasury activity in last 4 hours`,
@@ -98,7 +98,7 @@ function checkExchangeConcentration(db: any): PatternFlag | null {
 
   if (result && result.total >= THRESHOLDS.EXCHANGE_SPIKE) {
     return {
-      id: `exchange-concentration-${Date.now()}`,
+      id: `exchange-concentration-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       pattern: 'EXCHANGE_CONCENTRATION',
       severity: 'alert',
       message: `INFLOW SPIKE \u2014 $${formatM(result.total)} entering ${result.to_entity}. Potential selling pressure.`,
@@ -118,7 +118,7 @@ function checkExchangeExodus(db: any): PatternFlag | null {
 
   if (result.total >= THRESHOLDS.EXCHANGE_SPIKE) {
     return {
-      id: `exchange-exodus-${Date.now()}`,
+      id: `exchange-exodus-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       pattern: 'EXCHANGE_EXODUS',
       severity: 'watch',
       message: `OUTFLOW SURGE \u2014 $${formatM(result.total)} leaving exchanges. Accumulation signal.`,
@@ -143,7 +143,7 @@ function checkTronSurge(db: any): PatternFlag | null {
     const tronShare = result.tronVol / result.totalVol;
     if (tronShare >= THRESHOLDS.TRON_DOMINANCE) {
       return {
-        id: `tron-surge-${Date.now()}`,
+        id: `tron-surge-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
         pattern: 'TRON_SURGE',
         severity: 'watch',
         message: `TRON DOMINANCE \u2014 ${Math.round(tronShare * 100)}% of USDT volume. Underground activity elevated.`,
@@ -165,7 +165,7 @@ function checkSupplyShock(db: any): PatternFlag | null {
 
   if (result.netMint >= THRESHOLDS.SUPPLY_SHOCK) {
     return {
-      id: `supply-shock-${Date.now()}`,
+      id: `supply-shock-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       pattern: 'SUPPLY_SHOCK',
       severity: 'alert',
       message: `SUPPLY EXPANSION \u2014 $${formatM(result.netMint)} new stablecoins entered the system.`,
@@ -186,7 +186,7 @@ function checkSupplyContraction(db: any): PatternFlag | null {
 
   if (result.netBurn >= THRESHOLDS.SUPPLY_CONTRACTION) {
     return {
-      id: `supply-contraction-${Date.now()}`,
+      id: `supply-contraction-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       pattern: 'SUPPLY_CONTRACTION',
       severity: 'alert',
       message: `SUPPLY CONTRACTION \u2014 $${formatM(result.netBurn)} stablecoins destroyed. Liquidity draining.`,
@@ -220,7 +220,7 @@ function checkWhaleCluster(db: any): PatternFlag | null {
 
   if (result.uniqueWhales >= THRESHOLDS.WHALE_CLUSTER_COUNT) {
     return {
-      id: `whale-cluster-${Date.now()}`,
+      id: `whale-cluster-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       pattern: 'WHALE_CLUSTER',
       severity: 'watch',
       message: `INSTITUTIONAL CLUSTER \u2014 ${result.uniqueWhales} whales active simultaneously.`,
@@ -245,7 +245,7 @@ function checkQuietPeriod(db: any): PatternFlag | null {
 
   if (stats7d.avgDaily > 0 && stats24h.vol < stats7d.avgDaily * THRESHOLDS.QUIET_THRESHOLD) {
     return {
-      id: `quiet-period-${Date.now()}`,
+      id: `quiet-period-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       pattern: 'QUIET_BEFORE_STORM',
       severity: 'info',
       message: `LOW ACTIVITY \u2014 Unusual quiet. Volume at ${Math.round((stats24h.vol / stats7d.avgDaily) * 100)}% of average. Watch for breakout.`,
@@ -270,7 +270,7 @@ function checkRapidRelay(db: any): PatternFlag | null {
 
   if (result) {
     return {
-      id: `rapid-relay-${Date.now()}`,
+      id: `rapid-relay-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       pattern: 'RAPID_RELAY',
       severity: 'watch',
       message: `RAPID RELAY \u2014 ~$${formatM(result.roundedAmount)} routed through ${result.cnt} addresses quickly.`,
@@ -346,7 +346,7 @@ function checkDivergenceFlip(db: any): PatternFlag | null {
       : `${usdcFlipped ? 'USDC' : 'USDT'} flipped from ${usdcFlipped ? lastUsdcDir : lastUsdtDir} to ${usdcFlipped ? currentUsdcDir : currentUsdtDir}`;
 
     return {
-      id: `divergence-flip-${Date.now()}`,
+      id: `divergence-flip-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       pattern: 'DIVERGENCE_FLIP',
       severity: 'high',
       message: `DIVERGENCE FLIP \u2014 ${detail}. Superman and Bizarro changing moves.`,

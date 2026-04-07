@@ -348,3 +348,19 @@ export function getRecentNews(limit: number = 20): any[] {
   const db = getDb();
   return db.prepare('SELECT * FROM news ORDER BY timestamp DESC LIMIT ?').all(limit);
 }
+
+// ---- Chart data queries ----
+
+export function getDailyMintBurn(token: string, days: number = 7): any[] {
+  const db = getDb();
+  return db.prepare(`
+    SELECT
+      date(timestamp) as day,
+      COALESCE(SUM(CASE WHEN type = 'MINT' THEN amount_usd ELSE 0 END), 0) as mint,
+      COALESCE(SUM(CASE WHEN type = 'BURN' THEN amount_usd ELSE 0 END), 0) as burn
+    FROM events
+    WHERE token = ? AND timestamp >= date('now', '-' || ? || ' days')
+    GROUP BY date(timestamp)
+    ORDER BY day ASC
+  `).all(token, days);
+}

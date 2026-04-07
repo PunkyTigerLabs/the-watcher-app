@@ -5,11 +5,13 @@
 import { View, Text, StyleSheet } from 'react-native';
 import PulsingDot from './PulsingDot';
 import { colors } from '../theme';
+import { isPro } from '../api/watcher';
 
 type Status = 'LIVE' | 'DELAYED' | 'DEMO';
 
 interface Props {
-  status: Status;
+  status?: Status;
+  lastUpdated?: string;
 }
 
 const STATUS_CONFIG: Record<Status, { color: string; label: string }> = {
@@ -18,12 +20,28 @@ const STATUS_CONFIG: Record<Status, { color: string; label: string }> = {
   DEMO: { color: colors.muted, label: 'DEMO' },
 };
 
-export default function StatusBadge({ status }: Props) {
-  const config = STATUS_CONFIG[status];
+function calculateStatus(lastUpdated?: string): Status {
+  if (!lastUpdated) {
+    return isPro() ? 'DEMO' : 'DEMO';
+  }
+
+  const now = Date.now();
+  const updated = new Date(lastUpdated).getTime();
+  const diffMs = now - updated;
+  const diffMins = diffMs / (1000 * 60);
+
+  if (diffMins < 5) return 'LIVE';
+  if (diffMins < 15) return 'DELAYED';
+  return 'DEMO';
+}
+
+export default function StatusBadge({ status, lastUpdated }: Props) {
+  const finalStatus = status ?? calculateStatus(lastUpdated);
+  const config = STATUS_CONFIG[finalStatus];
 
   return (
     <View style={[styles.badge, { backgroundColor: config.color + '18', borderColor: config.color + '40' }]}>
-      {status === 'LIVE' && <PulsingDot color={config.color} size={4} />}
+      {finalStatus === 'LIVE' && <PulsingDot color={config.color} size={4} />}
       <Text style={[styles.text, { color: config.color }]}>{config.label}</Text>
     </View>
   );

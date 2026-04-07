@@ -75,5 +75,11 @@
 
     { "address": "TKcEU8ekq2ZoFzLSGFYCUY6aocJBX9X31b", "name": "Sun.io", "type": "DeFi", "chains": ["TRON"] },
     { "address": "TXJgMdjVX5dKiQaUi9Zg7EKPnFtGroQErr", "name": "JustLend", "type": "DeFi", "chains": ["TRON"] }
+  ],
+  "base": [
+    { "address": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913", "name": "USDC Contract (Base)", "type": "Treasury", "chains": ["BASE"] },
+    { "address": "0x0000000000000000000000000000000000000000", "name": "Mint/Burn", "type": "Treasury", "chains": ["BASE"] },
+    { "address": "0xd9aAEc86B65D86f6A7B5B1b0c42FFA531710b6CA", "name": "USDbC (Bridged)", "type": "Treasury", "chains": ["BASE"] },
+    { "address": "0x4200000000000000000000000000000000000006", "name": "WETH (Base)", "type": "DeFi", "chains": ["BASE"] }
   ]
 }

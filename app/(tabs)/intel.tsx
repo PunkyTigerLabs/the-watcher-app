@@ -76,13 +76,23 @@ export default function IntelTab() {
     ? fgValue > 60 ? colors.green : fgValue > 40 ? colors.gold : colors.red
     : colors.muted;
 
-  // Determine narrative alignment
+  // Detailed narrative alignment logic
   const signalScore = signal?.score ?? 0;
-  const isAligned = fgValue !== null && signalScore !== 0
-    ? (fgValue > 50 && signalScore > 0) || (fgValue <= 50 && signalScore < 0)
-    : null;
-  const alignmentColor = isAligned === true ? colors.green : isAligned === false ? colors.red : colors.muted;
-  const alignmentLabel = isAligned === true ? 'ALIGNED' : isAligned === false ? 'DIVERGED — money talks, news walks' : 'CALCULATING';
+
+  function getAlignmentDetail(fg: number, sig: number) {
+    if (fg <= 25 && sig > 20) return { status: 'DIVERGED', detail: 'Fear masking accumulation — classic buy signal', color: colors.green };
+    if (fg >= 75 && sig < -20) return { status: 'DIVERGED', detail: 'Greed masking distribution — classic sell signal', color: colors.red };
+    if (fg <= 25 && sig < -20) return { status: 'ALIGNED', detail: 'Fear confirmed by outflows — caution warranted', color: colors.red };
+    if (fg >= 75 && sig > 20) return { status: 'ALIGNED', detail: 'Greed confirmed by inflows — momentum strong', color: colors.green };
+    if (fg > 40 && fg < 60 && Math.abs(sig) < 15) return { status: 'NEUTRAL', detail: 'Market in equilibrium — no clear direction', color: colors.gold };
+    if (fg > 50 && sig > 0) return { status: 'ALIGNED', detail: 'Mild optimism with supporting capital flows', color: colors.green };
+    if (fg < 50 && sig < 0) return { status: 'ALIGNED', detail: 'Mild pessimism with confirming outflows', color: colors.gold };
+    return { status: 'MIXED', detail: 'Sentiment and flows sending mixed signals', color: colors.gold };
+  }
+
+  const alignment = fgValue !== null && signalScore !== 0 ? getAlignmentDetail(fgValue, signalScore) : { status: 'CALCULATING', detail: 'Awaiting sufficient data to compare sentiment and signal.', color: colors.muted };
+  const alignmentColor = alignment.color;
+  const alignmentLabel = alignment.status;
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
@@ -137,11 +147,7 @@ export default function IntelTab() {
                 </Text>
               </View>
               <Text style={styles.alignmentDesc}>
-                {isAligned === true
-                  ? 'News sentiment and on-chain flows are moving in the same direction. Market consensus is strong.'
-                  : isAligned === false
-                  ? 'News and on-chain flows are diverging. On-chain activity suggests actual capital movement. Follow the money.'
-                  : 'Awaiting sufficient data to compare sentiment and signal.'}
+                {alignment.detail}
               </Text>
             </GlowCard>
           </PaywallGate>

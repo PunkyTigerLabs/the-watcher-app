@@ -3,7 +3,7 @@
 // ============================================
 
 import { Router } from 'express';
-import { getDb, getEvents, getEventStats, getTopFlows, getSnapshot, saveSnapshot } from '../db';
+import { getDb, getEvents, getEventStats, getTopFlows, getSnapshot, saveSnapshot, getDailyMintBurn } from '../db';
 import { generateHeadline } from '../engine/headlines';
 import { DISPLAY_LIMITS } from '../config';
 
@@ -45,6 +45,12 @@ router.get('/overview', async (_req, res) => {
     const totalVol = tronVolume + ethVolume;
     const tronShare = totalVol > 0 ? tronVolume / totalVol : 0;
 
+    // Get supply from snapshot
+    const supplySnapshot = getSnapshot('supply_usdt');
+    const totalSupply = supplySnapshot?.data?.totalSupply || 0;
+
+    const chartData = getDailyMintBurn('USDT');
+
     const response = {
       token: 'USDT',
       status: events.length > 0 ? 'live' : 'demo',
@@ -55,8 +61,9 @@ router.get('/overview', async (_req, res) => {
         printed24h: stats.mints,
         burned24h: stats.burns,
         net24h: stats.mints - stats.burns,
-        totalSupply: 0,
+        totalSupply,
       },
+      chartData,
       events: events.map(mapEvent),
       topInflows: topInflows.map((f: any) => ({
         entity: f.entity,

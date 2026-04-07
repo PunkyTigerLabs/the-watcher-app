@@ -3,7 +3,7 @@
 // ============================================
 
 import { Router } from 'express';
-import { getEvents, getEventStats, getTopFlows, getSnapshot, saveSnapshot } from '../db';
+import { getEvents, getEventStats, getTopFlows, getSnapshot, saveSnapshot, getDailyMintBurn } from '../db';
 import { generateHeadline } from '../engine/headlines';
 import { DISPLAY_LIMITS } from '../config';
 import { fetchTokenSupply } from '../services/etherscan';
@@ -40,6 +40,12 @@ router.get('/overview', async (_req, res) => {
       biggestEntityType: biggestEvent?.to_entity_type || biggestEvent?.from_entity_type,
     });
 
+    // Get supply from snapshot
+    const supplySnapshot = getSnapshot('supply_usdc');
+    const totalSupply = supplySnapshot?.data?.totalSupply || 0;
+
+    const chartData = getDailyMintBurn('USDC');
+
     const response = {
       token: 'USDC',
       status: events.length > 0 ? 'live' : 'demo',
@@ -49,8 +55,9 @@ router.get('/overview', async (_req, res) => {
         printed24h: stats.mints,
         burned24h: stats.burns,
         net24h: stats.mints - stats.burns,
-        totalSupply: 0, // Will be populated by supply cron
+        totalSupply,
       },
+      chartData,
       events: events.map(mapEvent),
       topInflows: topInflows.map((f: any) => ({
         entity: f.entity,
