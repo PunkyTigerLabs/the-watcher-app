@@ -5,7 +5,7 @@
 
 const BASE_URL = __DEV__
   ? 'http://localhost:3000'
-  : 'https://the-watcher-backend-production.up.railway.app';
+  : 'https://the-watcher-app-production.up.railway.app';
 
 // Store the API key in memory (PRO users)
 let apiKey: string | null = null;
