@@ -122,7 +122,7 @@ export const SERVER = {
   PORT: parseInt(process.env.PORT || '3000', 10),
   NODE_ENV: process.env.NODE_ENV || 'development',
   WATCHER_API_KEY: process.env.WATCHER_API_KEY || 'dev-key',
-  ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY || '',
+  DEEPSEEK_API_KEY: process.env.DEEPSEEK_API_KEY || '',
   ENABLE_ANALYST: process.env.ENABLE_ANALYST === 'true',
 } as const;
 

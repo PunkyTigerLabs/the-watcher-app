@@ -68,7 +68,7 @@ app.get('/health', (_req, res) => {
       trongrid: !!process.env.TRONGRID_API_KEY,
       cryptocompare: true, // Free — no key needed
       solscan: !!process.env.SOLSCAN_API_KEY,
-      anthropic: !!process.env.ANTHROPIC_API_KEY,
+      deepseek: !!process.env.DEEPSEEK_API_KEY,
     },
   });
 });

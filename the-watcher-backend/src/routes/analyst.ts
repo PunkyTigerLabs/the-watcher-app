@@ -1,6 +1,8 @@
 // ============================================
-// THE WATCHER — AI Analyst Route
+// THE WATCHER — AI Analyst Route (DeepSeek)
 // ============================================
+// Uses DeepSeek API (OpenAI-compatible) for AI intelligence briefings.
+// Much cheaper than Claude/GPT — same quality for structured analysis.
 
 import { Router } from 'express';
 import fetch from 'node-fetch';
@@ -9,9 +11,11 @@ import { SERVER } from '../config';
 
 const router = Router();
 
+const DEEPSEEK_API_URL = 'https://api.deepseek.com/v1/chat/completions';
+
 /**
  * GET /analyst (PRO)
- * AI-generated narrative via Claude API.
+ * AI-generated narrative via DeepSeek API.
  * Cached for 1 hour.
  */
 router.get('/', async (_req, res) => {
@@ -33,16 +37,16 @@ router.get('/', async (_req, res) => {
     }
 
     // Generate new narrative
-    if (!SERVER.ENABLE_ANALYST || !SERVER.ANTHROPIC_API_KEY) {
+    if (!SERVER.ENABLE_ANALYST || !SERVER.DEEPSEEK_API_KEY) {
       return res.json({
-        narrative: 'AI Flow Analyst is not enabled. Configure ANTHROPIC_API_KEY and set ENABLE_ANALYST=true.',
+        narrative: 'AI Flow Analyst is not enabled. Configure DEEPSEEK_API_KEY and set ENABLE_ANALYST=true.',
         generatedAt: new Date().toISOString(),
         cached: false,
       });
     }
 
     const summary = buildSummary();
-    const narrative = await callClaude(summary);
+    const narrative = await callDeepSeek(summary);
 
     // Cache for 1 hour
     db.prepare(`
@@ -84,30 +88,37 @@ function buildSummary() {
   };
 }
 
-async function callClaude(summary: any): Promise<string> {
-  const response = await fetch('https://api.anthropic.com/v1/messages', {
+async function callDeepSeek(summary: any): Promise<string> {
+  const response = await fetch(DEEPSEEK_API_URL, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'x-api-key': SERVER.ANTHROPIC_API_KEY,
-      'anthropic-version': '2023-06-01',
+      'Authorization': `Bearer ${SERVER.DEEPSEEK_API_KEY}`,
     },
     body: JSON.stringify({
-      model: 'claude-haiku-4-5-20251001',
+      model: 'deepseek-chat',
       max_tokens: 500,
-      messages: [{
-        role: 'user',
-        content: `You are The Watcher's Flow Analyst. Analyze these stablecoin flows from the last 24 hours and provide a 2-3 paragraph intelligence briefing. Be direct. No disclaimers. Write like a Bloomberg terminal analyst. Focus on what matters for capital allocation decisions.\n\nData: ${JSON.stringify(summary)}`,
-      }],
+      temperature: 0.3, // Low temperature for analytical precision
+      messages: [
+        {
+          role: 'system',
+          content: 'You are The Watcher\'s Flow Analyst — a senior institutional stablecoin intelligence analyst. Write like a Bloomberg terminal briefing. Be direct, precise, and actionable. No disclaimers, no hedging. Focus on what matters for capital allocation decisions.',
+        },
+        {
+          role: 'user',
+          content: `Analyze these stablecoin capital flows from the last 24 hours and provide a 2-3 paragraph intelligence briefing:\n\n${JSON.stringify(summary, null, 2)}`,
+        },
+      ],
     }),
   });
 
   const data = (await response.json()) as any;
 
-  if (data.content && data.content[0]) {
-    return data.content[0].text;
+  if (data.choices && data.choices[0]?.message?.content) {
+    return data.choices[0].message.content;
   }
 
+  console.warn('[Analyst] DeepSeek response:', JSON.stringify(data));
   return 'Unable to generate analyst narrative at this time.';
 }
 
