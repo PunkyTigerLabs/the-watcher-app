@@ -63,11 +63,12 @@ router.get('/', (_req, res) => {
 
     res.json({
       whales: whales.map((w: any) => ({
-        entity: w.entity,
-        entityType: w.entityType,
+        address: w.entity,
+        label: w.entity,
+        type: w.entityType,
+        chain: 'ETH',
         totalVolume: w.totalVolume,
-        moveCount: w.moveCount,
-        lastAction: w.lastAction,
+        eventCount: w.moveCount,
         lastSeen: w.lastSeen,
       })),
       totalTracked: whales.length,

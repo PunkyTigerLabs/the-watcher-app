@@ -32,13 +32,14 @@ router.get('/supply', async (_req, res) => {
       fetchStablecoinTVLByChain(),
     ]);
 
+    // Extract USDC and USDT supply numbers
+    const usdc = coinGecko?.usdc?.supply || defiLlama?.usdcData?.supply || 0;
+    const usdt = coinGecko?.usdt?.supply || defiLlama?.usdtData?.supply || 0;
+
     const response = {
+      usdc,
+      usdt,
       timestamp: new Date().toISOString(),
-      coingecko: coinGecko,
-      defillama: {
-        supply: defiLlama,
-        chainTVL,
-      },
     };
 
     // Cache it
@@ -71,9 +72,15 @@ router.get('/exchange', async (_req, res) => {
       getExchangeFlowSignal(),
     ]);
 
+    // Extract BTC and ETH prices from ticker (USDCUSDT pair has lastPrice for reference)
+    // For now, use placeholder values if ticker data is unavailable
+    const btc = ticker?.lastPrice ? parseFloat(ticker.lastPrice.toString()) : 0;
+    const eth = ticker?.weighted_avg_price ? parseFloat(ticker.weighted_avg_price.toString()) : 0;
+
     const response = {
+      btc,
+      eth,
       timestamp: new Date().toISOString(),
-      ticker,
       pressure,
       interpretation:
         pressure > 50 ? 'Strong buying pressure' :

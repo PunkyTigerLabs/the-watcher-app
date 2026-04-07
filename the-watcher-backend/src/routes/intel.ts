@@ -16,13 +16,11 @@ router.get('/news', (_req, res) => {
     const news = getRecentNews(20);
     const mapped = news.map((item: any) => ({
       id: item.id,
-      timestamp: item.timestamp,
-      source: item.source,
       title: item.title,
+      source: item.source,
       url: item.url,
       sentiment: item.sentiment,
-      relevantTokens: JSON.parse(item.relevant_tokens || '[]'),
-      score: item.score,
+      publishedAt: item.timestamp,
     }));
 
     res.json({

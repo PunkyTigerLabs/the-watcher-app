@@ -3,7 +3,7 @@
 // ============================================
 
 import { Router } from 'express';
-import { getSignalHistory, getSnapshot, saveSnapshot } from '../db';
+import { getSignalHistory, getSnapshot, saveSnapshot, getActivePatterns } from '../db';
 
 const router = Router();
 
@@ -60,16 +60,16 @@ router.get('/', (_req, res) => {
 });
 
 /**
- * GET /signal/history?days=30
+ * GET /signal/history?limit=30
  */
 router.get('/history', (req, res) => {
   try {
-    const days = parseInt(req.query.days as string) || 30;
-    const history = getSignalHistory(days);
+    const limit = parseInt(req.query.limit as string) || 30;
+    const history = getSignalHistory(limit);
 
     res.json({
       history: history.map((h: any) => ({
-        date: h.timestamp,
+        timestamp: h.timestamp,
         score: h.score,
         label: h.label,
       })),
@@ -77,6 +77,30 @@ router.get('/history', (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch signal history' });
+  }
+});
+
+/**
+ * GET /signal/patterns (PRO)
+ * Returns active patterns detected in market.
+ */
+router.get('/patterns', (_req, res) => {
+  try {
+    const patterns = getActivePatterns();
+    res.json({
+      patterns: patterns.map((p: any) => ({
+        id: p.id,
+        pattern: p.pattern,
+        severity: p.severity,
+        message: p.message,
+        timestamp: p.timestamp,
+        active: p.active === 1,
+      })),
+      updatedAt: new Date().toISOString(),
+    });
+  } catch (error) {
+    console.error('[Signal] Patterns error:', error);
+    res.status(500).json({ error: 'Failed to fetch patterns' });
   }
 });
 

@@ -46,35 +46,51 @@ router.get('/overview', async (_req, res) => {
 
     const chartData = getDailyMintBurn('USDC');
 
+    // Merge topInflows and topOutflows into single topFlows array
+    const topFlows = [
+      ...topInflows.map((f: any) => ({
+        txHash: f.txHash || '',
+        token: 'USDC',
+        type: 'TRANSFER',
+        amount: f.totalAmount,
+        from: f.entity,
+        fromLabel: f.entity,
+        from_entity_type: f.entityType,
+        to: '',
+        toLabel: null,
+        chain: 'ETH',
+        timestamp: f.lastSeen,
+        relevance: 'high',
+      })),
+      ...topOutflows.map((f: any) => ({
+        txHash: f.txHash || '',
+        token: 'USDC',
+        type: 'TRANSFER',
+        amount: f.totalAmount,
+        from: '',
+        fromLabel: null,
+        to: f.entity,
+        toLabel: f.entity,
+        to_entity_type: f.entityType,
+        chain: 'ETH',
+        timestamp: f.lastSeen,
+        relevance: 'high',
+      })),
+    ];
+
     const response = {
-      token: 'USDC',
-      status: events.length > 0 ? 'live' : 'demo',
-      updatedAt: new Date().toISOString(),
       headline,
+      minted24h: stats.mints,
+      burned24h: stats.burns,
+      net24h: stats.mints - stats.burns,
+      eventCount: stats.eventCount,
+      topFlows,
+      chartData: chartData.map((d: any) => ({ day: d.date, mint: d.mints, burn: d.burns })),
       stats: {
-        printed24h: stats.mints,
-        burned24h: stats.burns,
-        net24h: stats.mints - stats.burns,
         totalSupply,
       },
-      chartData,
-      events: events.map(mapEvent),
-      topInflows: topInflows.map((f: any) => ({
-        entity: f.entity,
-        entityType: f.entityType,
-        totalAmount: f.totalAmount,
-        eventCount: f.eventCount,
-        direction: 'in',
-        lastSeen: f.lastSeen,
-      })),
-      topOutflows: topOutflows.map((f: any) => ({
-        entity: f.entity,
-        entityType: f.entityType,
-        totalAmount: f.totalAmount,
-        eventCount: f.eventCount,
-        direction: 'out',
-        lastSeen: f.lastSeen,
-      })),
+      lastUpdated: new Date().toISOString(),
+      status: events.length > 0 ? 'live' : 'demo',
     };
 
     // Save snapshot for fallback
