@@ -4,6 +4,7 @@
 
 import Database from 'better-sqlite3';
 import path from 'path';
+import fs from 'fs';
 
 const DB_PATH = path.join(__dirname, '..', 'data', 'watcher.db');
 
@@ -11,6 +12,11 @@ let db: Database.Database;
 
 export function getDb(): Database.Database {
   if (!db) {
+    // Ensure data directory exists before opening SQLite
+    const dataDir = path.dirname(DB_PATH);
+    if (!fs.existsSync(dataDir)) {
+      fs.mkdirSync(dataDir, { recursive: true });
+    }
     db = new Database(DB_PATH);
     db.pragma('journal_mode = WAL');
     db.pragma('foreign_keys = ON');
@@ -118,13 +124,6 @@ function initSchema() {
       expires_at TEXT NOT NULL
     );
   `);
-
-  // Ensure data directory exists
-  const fs = require('fs');
-  const dataDir = path.join(__dirname, '..', 'data');
-  if (!fs.existsSync(dataDir)) {
-    fs.mkdirSync(dataDir, { recursive: true });
-  }
 
   console.log('[DB] Schema initialized successfully');
 }
