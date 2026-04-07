@@ -98,9 +98,9 @@ export const API_CONFIG = {
     BASE_URL: 'https://public-api.solscan.io',
     RATE_LIMIT: 10,
   },
-  CRYPTOPANIC: {
-    BASE_URL: 'https://cryptopanic.com/api/v1',
-    API_KEY: process.env.CRYPTOPANIC_API_KEY || '',
+  CRYPTOCOMPARE: {
+    BASE_URL: 'https://min-api.cryptocompare.com/data/v2',
+    // Free tier — no API key required for news endpoint
   },
   FEAR_GREED: {
     BASE_URL: 'https://api.alternative.me/fng',

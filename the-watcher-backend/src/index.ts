@@ -66,7 +66,7 @@ app.get('/health', (_req, res) => {
       etherscan: !!process.env.ETHERSCAN_API_KEY,
       basescan: !!process.env.BASESCAN_API_KEY,
       trongrid: !!process.env.TRONGRID_API_KEY,
-      cryptopanic: !!process.env.CRYPTOPANIC_API_KEY,
+      cryptocompare: true, // Free — no key needed
       solscan: !!process.env.SOLSCAN_API_KEY,
       anthropic: !!process.env.ANTHROPIC_API_KEY,
     },
@@ -118,7 +118,7 @@ app.listen(port, () => {
   getDb();
 
   // Validate required API keys at startup
-  const requiredKeys = ['ETHERSCAN_API_KEY', 'BASESCAN_API_KEY', 'CRYPTOPANIC_API_KEY'];
+  const requiredKeys = ['ETHERSCAN_API_KEY', 'BASESCAN_API_KEY'];
   const missingKeys = requiredKeys.filter(k => !process.env[k]);
   if (missingKeys.length > 0) {
     console.warn(`[WARNING] Missing API keys: ${missingKeys.join(', ')} — some features will be degraded`);
