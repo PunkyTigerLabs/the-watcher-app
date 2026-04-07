@@ -1,3 +1,8 @@
+// ============================================
+// THE WATCHER — Tab Navigation
+// ============================================
+// 4 Tabs: USDC | USDT | SIGNAL | INTEL
+
 import { Tabs } from 'expo-router';
 import { View, Text, StyleSheet } from 'react-native';
 import { colors } from '../../src/theme';
@@ -25,20 +30,62 @@ export default function TabLayout() {
         },
       }}
     >
-      <Tabs.Screen name="index" options={{ title: 'OVERVIEW', tabBarIcon: ({ focused }) => <TabIcon focused={focused} icon="⬡" /> }} />
-      <Tabs.Screen name="mints" options={{ title: 'MINTS', tabBarIcon: ({ focused }) => <TabIcon focused={focused} icon="◇" /> }} />
-      <Tabs.Screen name="whales" options={{ title: 'WHALES', tabBarIcon: ({ focused }) => <TabIcon focused={focused} icon="◎" /> }} />
-      <Tabs.Screen name="rwa" options={{ title: 'RWA', tabBarIcon: ({ focused }) => <TabIcon focused={focused} icon="▣" /> }} />
-      <Tabs.Screen name="signal" options={{ title: 'SIGNAL', tabBarIcon: ({ focused }) => <TabIcon focused={focused} icon="◉" /> }} />
+      <Tabs.Screen
+        name="index"
+        options={{
+          title: 'USDC',
+          tabBarIcon: ({ focused }) => (
+            <TabIcon focused={focused} icon="◇" activeColor="#2775CA" />
+          ),
+          tabBarActiveTintColor: '#2775CA',
+        }}
+      />
+      <Tabs.Screen
+        name="usdt"
+        options={{
+          title: 'USDT',
+          tabBarIcon: ({ focused }) => (
+            <TabIcon focused={focused} icon="⬡" activeColor="#26A17B" />
+          ),
+          tabBarActiveTintColor: '#26A17B',
+        }}
+      />
+      <Tabs.Screen
+        name="signal"
+        options={{
+          title: 'SIGNAL',
+          tabBarIcon: ({ focused }) => (
+            <TabIcon focused={focused} icon="◉" activeColor={colors.green} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="intel"
+        options={{
+          title: 'INTEL',
+          tabBarIcon: ({ focused }) => (
+            <TabIcon focused={focused} icon="⟐" activeColor={colors.cyan} />
+          ),
+          tabBarActiveTintColor: colors.cyan,
+        }}
+      />
     </Tabs>
   );
 }
 
-function TabIcon({ focused, icon }: { focused: boolean; icon: string }) {
+function TabIcon({
+  focused,
+  icon,
+  activeColor = colors.green,
+}: {
+  focused: boolean;
+  icon: string;
+  activeColor?: string;
+}) {
   return (
-    <View style={[styles.iconWrap, focused && styles.iconActive]}>
-      <Text style={[styles.iconText, focused && styles.iconTextActive]}>{icon}</Text>
-      {focused && <View style={styles.activeDot} />}
+    <View style={[styles.iconWrap, focused && { backgroundColor: activeColor + '15' }]}>
+      <Text style={[styles.iconText, focused && { color: activeColor }]}>{icon}</Text>
+      {focused && <View style={[styles.activeDot, { backgroundColor: activeColor }]} />}
     </View>
   );
 }
@@ -51,15 +98,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderRadius: 10,
   },
-  iconActive: {
-    backgroundColor: colors.greenDim,
-  },
   iconText: {
     fontSize: 18,
     color: colors.muted,
-  },
-  iconTextActive: {
-    color: colors.green,
   },
   activeDot: {
     position: 'absolute',

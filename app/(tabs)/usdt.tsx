@@ -1,8 +1,8 @@
 // ============================================
-// THE WATCHER — USDC Tab (Superman)
+// THE WATCHER — USDT Tab (Bizarro)
 // ============================================
 // Layer 1: Headlines + Flow Overview
-// Superman theme: cool blue/teal
+// Bizarro theme: warm green/amber + TRON Underground emphasis
 
 import { useEffect, useRef, useCallback } from 'react';
 import { ScrollView, View, Text, StyleSheet, Animated, RefreshControl } from 'react-native';
@@ -13,16 +13,16 @@ import PulsingDot from '../../src/components/PulsingDot';
 import GlowCard from '../../src/components/GlowCard';
 import StatusBadge from '../../src/components/StatusBadge';
 import { LoadingState, ErrorState } from '../../src/components/LoadingState';
-import { colors, superman, gradients } from '../../src/theme';
+import { colors, bizarro, gradients } from '../../src/theme';
 import WatcherAPI, { OverviewData } from '../../src/api/watcher';
 import { useAutoRefresh } from '../../src/api/hooks';
 
 const fmt = (n: number) =>
   n >= 1e9 ? `$${(n / 1e9).toFixed(1)}B` : n >= 1e6 ? `$${(n / 1e6).toFixed(0)}M` : `$${(n / 1e3).toFixed(0)}K`;
 
-export default function USDCTab() {
+export default function USDTTab() {
   const { data, loading, error, refresh } = useAutoRefresh<OverviewData>(
-    () => WatcherAPI.usdcOverview(),
+    () => WatcherAPI.usdtOverview(),
     60000,
   );
 
@@ -43,7 +43,7 @@ export default function USDCTab() {
   if (loading && !data) {
     return (
       <SafeAreaView style={styles.safe} edges={['top']}>
-        <LoadingState message="Scanning USDC flows..." />
+        <LoadingState message="Scanning USDT flows..." />
       </SafeAreaView>
     );
   }
@@ -60,35 +60,33 @@ export default function USDCTab() {
   const minted = overview?.minted24h ?? 0;
   const burned = overview?.burned24h ?? 0;
   const net = overview?.net24h ?? 0;
-  const headline = overview?.headline ?? 'USDC Capital Flow Intelligence';
-  const subHeadline = overview?.subHeadline ?? 'Monitoring Circle Treasury activity';
+  const headline = overview?.headline ?? 'USDT Capital Flow Intelligence';
+  const subHeadline = overview?.subHeadline ?? 'Monitoring Tether Treasury activity';
   const topFlows = overview?.topFlows ?? [];
-
-  const inflows = topFlows.filter((f) => f.type === 'MINT' || f.relevance === 'critical' || f.relevance === 'high');
-  const outflows = topFlows.filter((f) => f.type === 'BURN');
+  const tronShare = overview?.tronShare ?? 0;
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       {/* Header */}
       <Animated.View style={[styles.header, { opacity: headerOpacity }]}>
         <View style={styles.logoRow}>
-          <PulsingDot color={superman.primary} size={6} />
-          <Text style={styles.logo}>USDC</Text>
+          <PulsingDot color={bizarro.primary} size={6} />
+          <Text style={styles.logo}>USDT</Text>
           <StatusBadge status={overview ? 'LIVE' : 'DEMO'} />
-          <View style={styles.supermanBadge}>
-            <Text style={styles.supermanText}>SUPERMAN</Text>
+          <View style={styles.bizarroBadge}>
+            <Text style={styles.bizarroText}>BIZARRO</Text>
           </View>
         </View>
-        <Text style={styles.subhead}>Circle Treasury · Ethereum · Base</Text>
+        <Text style={styles.subhead}>Tether Treasury · Ethereum · TRON</Text>
       </Animated.View>
 
       <Animated.ScrollView
         style={[styles.scroll, { opacity: headerOpacity, transform: [{ translateY: contentSlide }] }]}
         showsVerticalScrollIndicator={false}
-        refreshControl={<RefreshControl refreshing={loading} onRefresh={onRefresh} tintColor={superman.primary} />}
+        refreshControl={<RefreshControl refreshing={loading} onRefresh={onRefresh} tintColor={bizarro.primary} />}
       >
         {/* Headline Card */}
-        <LinearGradient colors={[...gradients.superman]} style={styles.headlineCard}>
+        <LinearGradient colors={[...gradients.bizarro]} style={styles.headlineCard}>
           <Text style={styles.headlineText}>{headline}</Text>
           <Text style={styles.headlineSub}>{subHeadline}</Text>
         </LinearGradient>
@@ -97,7 +95,7 @@ export default function USDCTab() {
         <View style={styles.statsRow}>
           <View style={styles.statCard}>
             <Text style={styles.statLabel}>MINTED 24H</Text>
-            <Text style={[styles.statValue, { color: superman.primary }]}>+{fmt(minted)}</Text>
+            <Text style={[styles.statValue, { color: bizarro.primary }]}>+{fmt(minted)}</Text>
           </View>
           <View style={styles.statCard}>
             <Text style={styles.statLabel}>BURNED 24H</Text>
@@ -111,12 +109,26 @@ export default function USDCTab() {
           </View>
         </View>
 
+        {/* TRON Underground Card */}
+        <GlowCard glowColor={bizarro.tron.color}>
+          <View style={styles.tronHeader}>
+            <View style={[styles.tronDot, { backgroundColor: bizarro.tron.color }]} />
+            <Text style={[styles.tronTitle, { color: bizarro.tron.color }]}>TRON UNDERGROUND</Text>
+            <View style={styles.sectionLine} />
+            <Text style={styles.tronShare}>{(tronShare * 100).toFixed(0)}% of volume</Text>
+          </View>
+          <Text style={styles.tronDesc}>
+            TRON carries {(tronShare * 100).toFixed(0)}% of USDT volume. Large TRON movements often precede
+            exchange volatility. The Watcher tracks TRC-20 transfers through TronGrid.
+          </Text>
+        </GlowCard>
+
         {/* Top Flows */}
         {topFlows.length > 0 && (
-          <GlowCard glowColor={superman.primary} noPadding>
+          <GlowCard glowColor={bizarro.primary} noPadding>
             <View style={styles.sectionHeader}>
-              <Text style={[styles.sectionArrow, { color: superman.primary }]}>◇</Text>
-              <Text style={[styles.sectionTitle, { color: superman.primary }]}>RECENT FLOWS</Text>
+              <Text style={[styles.sectionArrow, { color: bizarro.primary }]}>⬡</Text>
+              <Text style={[styles.sectionTitle, { color: bizarro.primary }]}>RECENT FLOWS</Text>
               <View style={styles.sectionLine} />
               <Text style={[styles.sectionCount, { color: colors.muted }]}>
                 {overview?.eventCount ?? 0} events
@@ -129,11 +141,11 @@ export default function USDCTab() {
                 type={
                   (f.fromLabel || f.toLabel || '')
                     .toLowerCase()
-                    .includes('binance') || (f.fromLabel || f.toLabel || '').toLowerCase().includes('coinbase')
+                    .includes('binance') || (f.fromLabel || f.toLabel || '').toLowerCase().includes('okx')
                     ? 'CEX'
-                    : (f.fromLabel || f.toLabel || '').toLowerCase().includes('circle') || (f.fromLabel || f.toLabel || '').toLowerCase().includes('blackrock')
+                    : (f.fromLabel || f.toLabel || '').toLowerCase().includes('tether') || (f.fromLabel || f.toLabel || '').toLowerCase().includes('jump')
                     ? 'Institutional'
-                    : (f.fromLabel || f.toLabel || '').toLowerCase().includes('aave') || (f.fromLabel || f.toLabel || '').toLowerCase().includes('compound')
+                    : (f.fromLabel || f.toLabel || '').toLowerCase().includes('justlend') || (f.fromLabel || f.toLabel || '').toLowerCase().includes('sun')
                     ? 'DeFi'
                     : 'Unknown'
                 }
@@ -149,8 +161,8 @@ export default function USDCTab() {
 
         {/* Empty state */}
         {topFlows.length === 0 && (
-          <GlowCard glowColor={superman.primary}>
-            <Text style={styles.emptyText}>No USDC flows detected yet. Data refreshes every 5 minutes.</Text>
+          <GlowCard glowColor={bizarro.primary}>
+            <Text style={styles.emptyText}>No USDT flows detected yet. Data refreshes every 5 minutes.</Text>
           </GlowCard>
         )}
 
@@ -185,22 +197,22 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   logo: {
-    color: superman.primary,
+    color: bizarro.primary,
     fontSize: 20,
     fontWeight: '800',
     letterSpacing: 3,
   },
-  supermanBadge: {
+  bizarroBadge: {
     marginLeft: 'auto',
-    backgroundColor: superman.primaryDim,
+    backgroundColor: bizarro.primaryDim,
     borderWidth: 0.5,
-    borderColor: superman.primary + '30',
+    borderColor: bizarro.primary + '30',
     borderRadius: 4,
     paddingHorizontal: 6,
     paddingVertical: 2,
   },
-  supermanText: {
-    color: superman.primary,
+  bizarroText: {
+    color: bizarro.accent,
     fontSize: 7,
     fontWeight: '800',
     letterSpacing: 1.5,
@@ -212,7 +224,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     padding: 20,
     borderWidth: 0.5,
-    borderColor: superman.primary + '20',
+    borderColor: bizarro.primary + '20',
     marginTop: 8,
     marginBottom: 12,
   },
@@ -255,6 +267,33 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: -0.5,
     fontVariant: ['tabular-nums'],
+  },
+
+  tronHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 10,
+  },
+  tronDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  tronTitle: {
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 1.5,
+  },
+  tronShare: {
+    color: colors.muted,
+    fontSize: 10,
+    fontVariant: ['tabular-nums'],
+  },
+  tronDesc: {
+    color: colors.textSub,
+    fontSize: 12,
+    lineHeight: 18,
   },
 
   sectionHeader: {
