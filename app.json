@@ -39,6 +39,12 @@
         "projectId": "e66bafcc-c17d-4feb-b84e-c4debf86c444"
       }
     },
-    "owner": "punky-tiger-labs"
+    "owner": "punky-tiger-labs",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/e66bafcc-c17d-4feb-b84e-c4debf86c444"
+    }
   }
 }
