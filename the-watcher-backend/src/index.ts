@@ -81,9 +81,11 @@ app.use('/market', marketRoutes);
 // Signal: partially free, full requires auth
 app.use('/signal', signalRoutes);
 
+// Intel: news + feargreed are free to show content on first open
+app.use('/intel', intelRoutes);
+
 // PRO endpoints (require API key in production)
 app.use('/whales', requireAuth, whalesRoutes);
-app.use('/intel', requireAuth, intelRoutes);
 app.use('/analyst', requireAuth, analystRoutes);
 
 // 404 handler

@@ -91,7 +91,7 @@ router.get('/overview', async (_req, res) => {
       eventCount: stats.eventCount,
       topFlows,
       tronShare: Math.round(tronShare * 100),
-      chartData: chartData.map((d: any) => ({ day: d.date, mint: d.mints, burn: d.burns })),
+      chartData: chartData.map((d: any) => ({ day: d.day, mint: d.mint, burn: d.burn })),
       stats: {
         totalSupply,
       },

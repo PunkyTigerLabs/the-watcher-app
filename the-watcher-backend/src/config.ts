@@ -129,13 +129,13 @@ export const SERVER = {
 // Free vs PRO display limits
 export const DISPLAY_LIMITS = {
   FREE: {
-    EVENTS: 5,
-    TOP_FLOWS: 3,
-    MIN_RELEVANCE: 'high' as const,
+    EVENTS: 10,
+    TOP_FLOWS: 5,
+    MIN_RELEVANCE: 'medium' as const,
   },
   PRO: {
     EVENTS: 50,
     TOP_FLOWS: 10,
-    MIN_RELEVANCE: 'medium' as const,
+    MIN_RELEVANCE: 'low' as const,
   },
 } as const;

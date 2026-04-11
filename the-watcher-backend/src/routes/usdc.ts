@@ -85,7 +85,7 @@ router.get('/overview', async (_req, res) => {
       net24h: stats.mints - stats.burns,
       eventCount: stats.eventCount,
       topFlows,
-      chartData: chartData.map((d: any) => ({ day: d.date, mint: d.mints, burn: d.burns })),
+      chartData: chartData.map((d: any) => ({ day: d.day, mint: d.mint, burn: d.burn })),
       stats: {
         totalSupply,
       },
