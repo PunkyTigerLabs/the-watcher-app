@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: the-watcher-backend
+    runtime: node
+    region: oregon
+    plan: free
+    buildCommand: npm install --include=dev && npm run build
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "10000"
+      - key: WATCHER_API_KEY
+        sync: false
+      - key: ETHERSCAN_API_KEY
+        sync: false
+      - key: BASESCAN_API_KEY
+        sync: false
+      - key: TRONGRID_API_KEY
+        sync: false
+      - key: DEEPSEEK_API_KEY
+        sync: false
+      - key: ENABLE_ANALYST
+        value: "false"
