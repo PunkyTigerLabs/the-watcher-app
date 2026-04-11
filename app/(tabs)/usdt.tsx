@@ -169,10 +169,10 @@ export default function USDTTab() {
             <View style={[styles.tronDot, { backgroundColor: bizarro.tron.color }]} />
             <Text style={[styles.tronTitle, { color: bizarro.tron.color }]}>TRON UNDERGROUND</Text>
             <View style={styles.sectionLine} />
-            <Text style={styles.tronShare}>{(tronShare * 100).toFixed(0)}% of volume</Text>
+            <Text style={styles.tronShare}>{tronShare.toFixed(0)}% of volume</Text>
           </View>
           <Text style={styles.tronDesc}>
-            TRON carries {(tronShare * 100).toFixed(0)}% of USDT volume. Large TRON movements often precede
+            TRON carries {tronShare.toFixed(0)}% of USDT volume. Large TRON movements often precede
             exchange volatility. The Watcher tracks TRC-20 transfers through TronGrid.
           </Text>
         </GlowCard>
@@ -240,7 +240,7 @@ function getEntityType(flow: any): string {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.bg },
+  safe: { flex: 1, backgroundColor: bizarro.bg },
   scroll: { flex: 1 },
   header: {
     paddingHorizontal: 20,
@@ -255,33 +255,33 @@ const styles = StyleSheet.create({
   },
   logo: {
     color: bizarro.primary,
-    fontSize: 20,
-    fontWeight: '800',
-    letterSpacing: 3,
+    fontSize: 22,
+    fontWeight: '900',
+    letterSpacing: 4,
   },
   bizarroBadge: {
     marginLeft: 'auto',
-    backgroundColor: bizarro.primaryDim,
-    borderWidth: 0.5,
-    borderColor: bizarro.primary + '30',
+    backgroundColor: bizarro.accent + '18',
+    borderWidth: 1,
+    borderColor: bizarro.accent + '40',
     borderRadius: 4,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
   },
   bizarroText: {
     color: bizarro.accent,
-    fontSize: 7,
-    fontWeight: '800',
-    letterSpacing: 1.5,
+    fontSize: 8,
+    fontWeight: '900',
+    letterSpacing: 2,
   },
-  subhead: { color: colors.muted, fontSize: 11, letterSpacing: 0.5, marginLeft: 22 },
+  subhead: { color: bizarro.primary + '60', fontSize: 11, letterSpacing: 0.5, marginLeft: 22 },
 
   headlineCard: {
     marginHorizontal: 16,
     borderRadius: 14,
     padding: 20,
-    borderWidth: 0.5,
-    borderColor: bizarro.primary + '20',
+    borderWidth: 1,
+    borderColor: bizarro.primary + '25',
     marginTop: 8,
     marginBottom: 12,
   },
@@ -306,14 +306,14 @@ const styles = StyleSheet.create({
   },
   statCard: {
     flex: 1,
-    backgroundColor: colors.surfaceSolid,
+    backgroundColor: bizarro.surface,
     borderRadius: 10,
     borderWidth: 0.5,
-    borderColor: colors.border,
+    borderColor: bizarro.borderColor,
     padding: 12,
   },
   statLabel: {
-    color: colors.muted,
+    color: bizarro.primary + '80',
     fontSize: 8,
     fontWeight: '700',
     letterSpacing: 1.2,
@@ -333,18 +333,23 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   tronDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    shadowColor: bizarro.tron.color,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 4,
   },
   tronTitle: {
     fontSize: 10,
-    fontWeight: '700',
-    letterSpacing: 1.5,
+    fontWeight: '900',
+    letterSpacing: 2,
   },
   tronShare: {
-    color: colors.muted,
+    color: bizarro.accent,
     fontSize: 10,
+    fontWeight: '700',
     fontVariant: ['tabular-nums'],
   },
   tronDesc: {
@@ -360,11 +365,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 0.5,
-    borderBottomColor: colors.border,
+    borderBottomColor: bizarro.borderColor,
   },
   sectionArrow: { fontSize: 14, fontWeight: '700' },
   sectionTitle: { fontSize: 10, fontWeight: '700', letterSpacing: 1.5 },
-  sectionLine: { flex: 1, height: 0.5, backgroundColor: colors.border },
+  sectionLine: { flex: 1, height: 0.5, backgroundColor: bizarro.borderColor },
   sectionCount: { fontSize: 10, fontVariant: ['tabular-nums'] },
 
   emptyText: {

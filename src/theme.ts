@@ -44,17 +44,21 @@ export const colors = {
 };
 
 // ---- Superman Theme (USDC) ----
+// Clean, institutional, transparent — like USDC itself
 export const superman = {
-  primary: '#2775CA',       // USDC blue
-  primaryBright: '#4A9FFF',
-  primaryDim: 'rgba(39,117,202,0.10)',
-  primaryGlow: 'rgba(39,117,202,0.20)',
+  primary: '#4A9FFF',       // Bright steel blue
+  primaryBright: '#70B8FF',
+  primaryDim: 'rgba(74,159,255,0.12)',
+  primaryGlow: 'rgba(74,159,255,0.25)',
   accent: '#00D4FF',        // Cyan accent
-  accentDim: 'rgba(0,212,255,0.08)',
-  mint: '#00C896',
+  accentDim: 'rgba(0,212,255,0.10)',
+  mint: '#4A9FFF',
   burn: '#FF3B5C',
-  gradient: ['#0A1428', '#060A12', '#040810'] as const,
-  glowGradient: ['rgba(39,117,202,0.08)', 'rgba(39,117,202,0)'] as const,
+  bg: '#060A14',            // Deep cold navy
+  surface: '#0A1024',       // Cold steel surface
+  borderColor: 'rgba(74,159,255,0.15)',
+  gradient: ['#0C1530', '#060A14', '#040810'] as const,
+  glowGradient: ['rgba(74,159,255,0.12)', 'rgba(74,159,255,0)'] as const,
   tabIcon: '◇',
   tokenName: 'USDC',
   entityName: 'Circle',
@@ -62,17 +66,21 @@ export const superman = {
 };
 
 // ---- Bizarro Theme (USDT) ----
+// Underground, opaque, dangerous — the shadow world of stablecoins
 export const bizarro = {
-  primary: '#26A17B',       // Tether green
-  primaryBright: '#50C878',
-  primaryDim: 'rgba(38,161,123,0.10)',
-  primaryGlow: 'rgba(38,161,123,0.20)',
-  accent: '#FF6B35',        // Warm amber/orange accent
-  accentDim: 'rgba(255,107,53,0.08)',
-  mint: '#26A17B',
+  primary: '#FF6B35',       // Hot amber/orange — NOT tether green
+  primaryBright: '#FF8C5A',
+  primaryDim: 'rgba(255,107,53,0.12)',
+  primaryGlow: 'rgba(255,107,53,0.25)',
+  accent: '#FF0013',        // TRON red as accent
+  accentDim: 'rgba(255,0,19,0.10)',
+  mint: '#FF6B35',
   burn: '#FF3B5C',
-  gradient: ['#140A0A', '#0C0606', '#080404'] as const,
-  glowGradient: ['rgba(38,161,123,0.08)', 'rgba(38,161,123,0)'] as const,
+  bg: '#0F0804',            // Deep warm black
+  surface: '#1A0E06',       // Dark amber surface
+  borderColor: 'rgba(255,107,53,0.15)',
+  gradient: ['#1A0C04', '#0F0804', '#080402'] as const,
+  glowGradient: ['rgba(255,107,53,0.12)', 'rgba(255,107,53,0)'] as const,
   tabIcon: '⬡',
   tokenName: 'USDT',
   entityName: 'Tether',
@@ -80,8 +88,8 @@ export const bizarro = {
   // TRON visual distinction
   tron: {
     color: '#FF0013',
-    dim: 'rgba(255,0,19,0.10)',
-    glow: 'rgba(255,0,19,0.20)',
+    dim: 'rgba(255,0,19,0.12)',
+    glow: 'rgba(255,0,19,0.25)',
     label: 'TRON UNDERGROUND',
   },
 };
@@ -95,8 +103,8 @@ export const gradients = {
   glow: ['rgba(0,200,150,0.08)', 'rgba(0,200,150,0)'] as const,
   danger: ['rgba(255,59,92,0.06)', 'rgba(255,59,92,0)'] as const,
   headerOverlay: ['rgba(6,9,15,0)', 'rgba(6,9,15,1)'] as const,
-  superman: ['#0A1428', '#060A12', '#040810'] as const,
-  bizarro: ['#140A0A', '#0C0606', '#080404'] as const,
+  superman: ['#0C1530', '#060A14', '#040810'] as const,
+  bizarro: ['#1A0C04', '#0F0804', '#080402'] as const,
 };
 
 export const CHAIN_COLORS: Record<string, string> = {

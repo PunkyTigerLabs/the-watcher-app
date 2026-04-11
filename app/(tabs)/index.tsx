@@ -228,7 +228,7 @@ function getEntityType(flow: any): string {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.bg },
+  safe: { flex: 1, backgroundColor: superman.bg },
   scroll: { flex: 1 },
   header: {
     paddingHorizontal: 20,
@@ -243,33 +243,33 @@ const styles = StyleSheet.create({
   },
   logo: {
     color: superman.primary,
-    fontSize: 20,
-    fontWeight: '800',
-    letterSpacing: 3,
+    fontSize: 22,
+    fontWeight: '900',
+    letterSpacing: 4,
   },
   supermanBadge: {
     marginLeft: 'auto',
     backgroundColor: superman.primaryDim,
-    borderWidth: 0.5,
-    borderColor: superman.primary + '30',
+    borderWidth: 1,
+    borderColor: superman.primary + '40',
     borderRadius: 4,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
   },
   supermanText: {
     color: superman.primary,
-    fontSize: 7,
-    fontWeight: '800',
-    letterSpacing: 1.5,
+    fontSize: 8,
+    fontWeight: '900',
+    letterSpacing: 2,
   },
-  subhead: { color: colors.muted, fontSize: 11, letterSpacing: 0.5, marginLeft: 22 },
+  subhead: { color: superman.primary + '60', fontSize: 11, letterSpacing: 0.5, marginLeft: 22 },
 
   headlineCard: {
     marginHorizontal: 16,
     borderRadius: 14,
     padding: 20,
-    borderWidth: 0.5,
-    borderColor: superman.primary + '20',
+    borderWidth: 1,
+    borderColor: superman.primary + '25',
     marginTop: 8,
     marginBottom: 12,
   },
@@ -294,14 +294,14 @@ const styles = StyleSheet.create({
   },
   statCard: {
     flex: 1,
-    backgroundColor: colors.surfaceSolid,
+    backgroundColor: superman.surface,
     borderRadius: 10,
     borderWidth: 0.5,
-    borderColor: colors.border,
+    borderColor: superman.borderColor,
     padding: 12,
   },
   statLabel: {
-    color: colors.muted,
+    color: superman.primary + '80',
     fontSize: 8,
     fontWeight: '700',
     letterSpacing: 1.2,
@@ -321,11 +321,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 0.5,
-    borderBottomColor: colors.border,
+    borderBottomColor: superman.borderColor,
   },
   sectionArrow: { fontSize: 14, fontWeight: '700' },
   sectionTitle: { fontSize: 10, fontWeight: '700', letterSpacing: 1.5 },
-  sectionLine: { flex: 1, height: 0.5, backgroundColor: colors.border },
+  sectionLine: { flex: 1, height: 0.5, backgroundColor: superman.borderColor },
   sectionCount: { fontSize: 10, fontVariant: ['tabular-nums'] },
 
   emptyText: {
