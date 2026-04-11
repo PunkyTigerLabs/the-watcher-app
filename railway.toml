@@ -1,0 +1,10 @@
+[build]
+builder = "NIXPACKS"
+buildCommand = "cd the-watcher-backend && npm install --include=dev && npm run build"
+
+[deploy]
+startCommand = "cd the-watcher-backend && npm start"
+healthcheckPath = "/health"
+healthcheckTimeout = 300
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10
