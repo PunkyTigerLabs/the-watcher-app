@@ -112,45 +112,41 @@ export default function IntelTab() {
           </View>
 
           {/* Fear & Greed Gauge */}
-          <PaywallGate feature="market sentiment">
-            <GlowCard glowColor={fgColor}>
-              <View style={styles.fgHeader}>
-                <Text style={[styles.sectionTitle, { marginBottom: 0 }]}>FEAR & GREED INDEX</Text>
-                <Text style={[styles.fgValue, { color: fgColor }]}>
-                  {fgValue ?? '—'}
-                </Text>
-              </View>
-              <View style={styles.fgBarTrack}>
-                <View style={[styles.fgBarFill, { width: `${fgValue ?? 50}%`, backgroundColor: fgColor }]} />
-              </View>
-              <View style={styles.fgLabels}>
-                <Text style={[styles.fgLabel, { color: colors.red }]}>EXTREME FEAR</Text>
-                <Text style={[styles.fgLabel, { color: fgColor }]}>{fgClass.toUpperCase()}</Text>
-                <Text style={[styles.fgLabel, { color: colors.green }]}>EXTREME GREED</Text>
-              </View>
-            </GlowCard>
-          </PaywallGate>
+          <GlowCard glowColor={fgColor}>
+            <View style={styles.fgHeader}>
+              <Text style={[styles.sectionTitle, { marginBottom: 0 }]}>FEAR & GREED INDEX</Text>
+              <Text style={[styles.fgValue, { color: fgColor }]}>
+                {fgValue ?? '—'}
+              </Text>
+            </View>
+            <View style={styles.fgBarTrack}>
+              <View style={[styles.fgBarFill, { width: `${fgValue ?? 50}%`, backgroundColor: fgColor }]} />
+            </View>
+            <View style={styles.fgLabels}>
+              <Text style={[styles.fgLabel, { color: colors.red }]}>EXTREME FEAR</Text>
+              <Text style={[styles.fgLabel, { color: fgColor }]}>{fgClass.toUpperCase()}</Text>
+              <Text style={[styles.fgLabel, { color: colors.green }]}>EXTREME GREED</Text>
+            </View>
+          </GlowCard>
 
           {/* Narrative Alignment */}
-          <PaywallGate feature="sentiment alignment">
-            <GlowCard glowColor={alignmentColor}>
-              <View style={styles.alignmentHeader}>
-                <PulsingDot color={alignmentColor} size={4} />
-                <Text style={[styles.sectionTitle, { color: alignmentColor, marginBottom: 0 }]}>
-                  NARRATIVE ALIGNMENT
-                </Text>
-              </View>
-              <View style={styles.alignmentStatus}>
-                <View style={[styles.alignmentDot, { backgroundColor: alignmentColor }]} />
-                <Text style={[styles.alignmentText, { color: alignmentColor }]}>
-                  {alignmentLabel}
-                </Text>
-              </View>
-              <Text style={styles.alignmentDesc}>
-                {alignment.detail}
+          <GlowCard glowColor={alignmentColor}>
+            <View style={styles.alignmentHeader}>
+              <PulsingDot color={alignmentColor} size={4} />
+              <Text style={[styles.sectionTitle, { color: alignmentColor, marginBottom: 0 }]}>
+                NARRATIVE ALIGNMENT
               </Text>
-            </GlowCard>
-          </PaywallGate>
+            </View>
+            <View style={styles.alignmentStatus}>
+              <View style={[styles.alignmentDot, { backgroundColor: alignmentColor }]} />
+              <Text style={[styles.alignmentText, { color: alignmentColor }]}>
+                {alignmentLabel}
+              </Text>
+            </View>
+            <Text style={styles.alignmentDesc}>
+              {alignment.detail}
+            </Text>
+          </GlowCard>
 
           {/* AI Analyst Narrative */}
           <PaywallGate feature="AI flow analysis">
@@ -177,47 +173,45 @@ export default function IntelTab() {
           </PaywallGate>
 
           {/* News Feed */}
-          <PaywallGate feature="filtered news feed">
-            <GlowCard noPadding>
-              <View style={styles.newsHeader}>
-                <Text style={[styles.sectionTitle, { marginBottom: 0 }]}>FILTERED NEWS</Text>
-                <Text style={styles.newsCount}>{news.length} items</Text>
+          <GlowCard noPadding>
+            <View style={styles.newsHeader}>
+              <Text style={[styles.sectionTitle, { marginBottom: 0 }]}>FILTERED NEWS</Text>
+              <Text style={styles.newsCount}>{news.length} items</Text>
+            </View>
+            {news.length === 0 && (
+              <View style={styles.emptyNews}>
+                <Text style={styles.emptyText}>No relevant news at this time.</Text>
               </View>
-              {news.length === 0 && (
-                <View style={styles.emptyNews}>
-                  <Text style={styles.emptyText}>No relevant news at this time.</Text>
+            )}
+            {news.map((item, i) => (
+              <TouchableOpacity
+                key={item.id || i}
+                style={styles.newsRow}
+                onPress={() => item.url && Linking.openURL(item.url)}
+                activeOpacity={0.7}
+              >
+                <View style={[styles.sentimentDot, { backgroundColor: SENTIMENT_COLORS[item.sentiment] || colors.muted }]} />
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.newsTitle} numberOfLines={2}>{item.title}</Text>
+                  <View style={styles.newsMeta}>
+                    <Text style={styles.newsSource}>{item.source}</Text>
+                    <Text style={styles.newsTime}>{getTimeAgo(item.publishedAt)}</Text>
+                  </View>
                 </View>
-              )}
-              {news.map((item, i) => (
-                <TouchableOpacity
-                  key={item.id || i}
-                  style={styles.newsRow}
-                  onPress={() => item.url && Linking.openURL(item.url)}
-                  activeOpacity={0.7}
-                >
-                  <View style={[styles.sentimentDot, { backgroundColor: SENTIMENT_COLORS[item.sentiment] || colors.muted }]} />
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.newsTitle} numberOfLines={2}>{item.title}</Text>
-                    <View style={styles.newsMeta}>
-                      <Text style={styles.newsSource}>{item.source}</Text>
-                      <Text style={styles.newsTime}>{getTimeAgo(item.publishedAt)}</Text>
-                    </View>
-                  </View>
-                  <View style={[
-                    styles.sentimentBadge,
-                    { backgroundColor: (SENTIMENT_COLORS[item.sentiment] || colors.muted) + '15' },
+                <View style={[
+                  styles.sentimentBadge,
+                  { backgroundColor: (SENTIMENT_COLORS[item.sentiment] || colors.muted) + '15' },
+                ]}>
+                  <Text style={[
+                    styles.sentimentText,
+                    { color: SENTIMENT_COLORS[item.sentiment] || colors.muted },
                   ]}>
-                    <Text style={[
-                      styles.sentimentText,
-                      { color: SENTIMENT_COLORS[item.sentiment] || colors.muted },
-                    ]}>
-                      {item.sentiment?.toUpperCase() || 'NEUTRAL'}
-                    </Text>
-                  </View>
-                </TouchableOpacity>
-              ))}
-            </GlowCard>
-          </PaywallGate>
+                    {item.sentiment?.toUpperCase() || 'NEUTRAL'}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </GlowCard>
 
           <View style={{ height: 30 }} />
         </ScrollView>
