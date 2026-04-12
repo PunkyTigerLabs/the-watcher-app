@@ -24,10 +24,10 @@ export function computeSignal(
   const usdtStats = getEventStats('USDT', 24);
 
   // 1. USDC Flow subscore (30%)
-  const usdcSubscore = computeFlowSubscore(usdcStats.mints, usdcStats.burns);
+  const usdcSubscore = computeFlowSubscore('USDC', usdcStats.mints, usdcStats.burns);
 
   // 2. USDT Flow subscore (30%)
-  const usdtSubscore = computeFlowSubscore(usdtStats.mints, usdtStats.burns);
+  const usdtSubscore = computeFlowSubscore('USDT', usdtStats.mints, usdtStats.burns);
 
   // 3. Whale Activity subscore (20%)
   const whaleSubscore = computeWhaleSubscore();
@@ -92,11 +92,12 @@ export function computeSignal(
  * - Transaction count significance (30%)
  * - Large moves (>$10M) direction (30%)
  */
-function computeFlowSubscore(mints: number, burns: number): number {
+function computeFlowSubscore(token: 'USDC' | 'USDT', mints: number, burns: number): number {
   const db = getDb();
   const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 
-  // Get detailed event stats
+  // Get detailed event stats — scoped to the token, otherwise both subscores
+  // end up identical because the count/large-move stats leak across tokens.
   const stats = db.prepare(`
     SELECT
       COUNT(*) as eventCount,
@@ -105,8 +106,8 @@ function computeFlowSubscore(mints: number, burns: number): number {
       COALESCE(SUM(amount), 0) as totalVolume,
       COALESCE(SUM(CASE WHEN type = 'MINT' AND amount >= 10000000 THEN amount ELSE 0 END), 0) as largeMints,
       COALESCE(SUM(CASE WHEN type = 'BURN' AND amount >= 10000000 THEN amount ELSE 0 END), 0) as largeBurns
-    FROM events WHERE timestamp >= ?
-  `).get(since) as any;
+    FROM events WHERE timestamp >= ? AND token = ?
+  `).get(since, token) as any;
 
   // 1. Net mint/burn ratio (40%)
   const net = mints - burns;
