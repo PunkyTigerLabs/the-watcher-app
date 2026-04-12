@@ -45,9 +45,13 @@ router.get('/overview', async (_req, res) => {
     const totalVol = tronVolume + ethVolume;
     const tronShare = totalVol > 0 ? tronVolume / totalVol : 0;
 
-    // Get supply from snapshot
+    // Get supply: token-contract snapshot first, then CoinGecko market_supply.
     const supplySnapshot = getSnapshot('supply_usdt');
-    const totalSupply = supplySnapshot?.data?.totalSupply || 0;
+    const marketSupplySnapshot = getSnapshot('market_supply');
+    const totalSupply =
+      supplySnapshot?.data?.totalSupply ||
+      marketSupplySnapshot?.data?.usdt ||
+      0;
 
     const chartData = getDailyMintBurn('USDT');
 

@@ -41,7 +41,7 @@ export async function fetchUSDCTransfersSOLANA(): Promise<CanonicalEvent[]> {
   return await solscanLimiter.execute('solana', async () => {
     const url = `${BASE_URL}/api/v2/spl/token/transfers` +
       `?token=${CONTRACTS.USDC.SOLANA}` +
-      `&limit=100`;
+      `&limit=200`;
 
     const response = await fetch(url);
     const data = (await response.json()) as SolscanResponse;

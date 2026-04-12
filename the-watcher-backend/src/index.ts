@@ -18,6 +18,7 @@ import intelRoutes from './routes/intel';
 import whalesRoutes from './routes/whales';
 import analystRoutes from './routes/analyst';
 import marketRoutes from './routes/market';
+import briefRoutes from './routes/brief';
 
 const app = express();
 const startTime = Date.now();
@@ -77,6 +78,7 @@ app.get('/health', (_req, res) => {
 app.use('/usdc', usdcRoutes);
 app.use('/usdt', usdtRoutes);
 app.use('/market', marketRoutes);
+app.use('/brief', briefRoutes);
 
 // Signal: partially free, full requires auth
 app.use('/signal', signalRoutes);

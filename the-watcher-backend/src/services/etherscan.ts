@@ -4,7 +4,7 @@
 // Fetches USDC and USDT token transfers from Ethereum
 
 import fetch from 'node-fetch';
-import { API_CONFIG, CONTRACTS } from '../config';
+import { API_CONFIG, CONTRACTS, ZERO_ADDRESS } from '../config';
 import { EtherscanTransfer, Token, CanonicalEvent } from '../types';
 import { normalizeEtherscanBatch } from '../normalize/etherscan';
 import { etherscanLimiter } from './rateLimiter';
@@ -25,7 +25,7 @@ async function fetchTokenTransfers(
   contractAddress: string,
   chainId: number = API_CONFIG.ETHERSCAN.CHAIN_ID_ETH,
   page: number = 1,
-  offset: number = 100, // Max 100 results per call for free tier
+  offset: number = 1000, // Etherscan v2 supports up to 10k per call, 1k is plenty and faster
   sort: 'asc' | 'desc' = 'desc'
 ): Promise<EtherscanTransfer[]> {
   if (!API_KEY) {
@@ -54,23 +54,52 @@ async function fetchTokenTransfers(
 /**
  * Fetch recent USDC transfers on Ethereum.
  */
-export async function fetchUSDCTransfersETH(): Promise<CanonicalEvent[]> {
-  console.log('[Etherscan] Fetching USDC transfers on ETH...');
-  const transfers = await fetchTokenTransfers(CONTRACTS.USDC.ETH);
+export async function fetchUSDCTransfersETH(page: number = 1): Promise<CanonicalEvent[]> {
+  console.log(`[Etherscan] Fetching USDC transfers on ETH (page ${page})...`);
+  const transfers = await fetchTokenTransfers(CONTRACTS.USDC.ETH, API_CONFIG.ETHERSCAN.CHAIN_ID_ETH, page);
   const events = normalizeEtherscanBatch(transfers, 'USDC', 'ETH', 'etherscan');
-  console.log(`[Etherscan] Got ${events.length} USDC events from ETH`);
+  console.log(`[Etherscan] Got ${events.length} USDC events from ETH (page ${page})`);
   return events;
 }
 
 /**
  * Fetch recent USDT transfers on Ethereum.
  */
-export async function fetchUSDTTransfersETH(): Promise<CanonicalEvent[]> {
-  console.log('[Etherscan] Fetching USDT transfers on ETH...');
-  const transfers = await fetchTokenTransfers(CONTRACTS.USDT.ETH);
+export async function fetchUSDTTransfersETH(page: number = 1): Promise<CanonicalEvent[]> {
+  console.log(`[Etherscan] Fetching USDT transfers on ETH (page ${page})...`);
+  const transfers = await fetchTokenTransfers(CONTRACTS.USDT.ETH, API_CONFIG.ETHERSCAN.CHAIN_ID_ETH, page);
   const events = normalizeEtherscanBatch(transfers, 'USDT', 'ETH', 'etherscan');
-  console.log(`[Etherscan] Got ${events.length} USDT events from ETH`);
+  console.log(`[Etherscan] Got ${events.length} USDT events from ETH (page ${page})`);
   return events;
+}
+
+/**
+ * Fetch token transfers involving the ZERO address — these are mints (from=0x0)
+ * and burns (to=0x0). Calling tokentx with address=ZERO_ADDRESS + contractaddress
+ * returns both mints and burns in a single page, so mint/burn events never get
+ * lost in the noise of regular high-volume tokentx pages.
+ */
+export async function fetchMintBurnETH(token: 'USDC' | 'USDT', page: number = 1): Promise<CanonicalEvent[]> {
+  if (!API_KEY) return [];
+  const contract = token === 'USDC' ? CONTRACTS.USDC.ETH : CONTRACTS.USDT.ETH;
+  console.log(`[Etherscan] Fetching ${token} mint/burn on ETH (page ${page})...`);
+
+  return await etherscanLimiter.execute('etherscan', async () => {
+    const url = `${BASE_URL}?chainid=${API_CONFIG.ETHERSCAN.CHAIN_ID_ETH}&module=account&action=tokentx` +
+      `&address=${ZERO_ADDRESS}` +
+      `&contractaddress=${contract}` +
+      `&page=${page}&offset=1000&sort=desc` +
+      `&apikey=${API_KEY}`;
+    const response = await fetch(url);
+    const data = (await response.json()) as EtherscanResponse;
+    if (data.status !== '1' || !Array.isArray(data.result)) {
+      console.warn(`[Etherscan] ${token} mint/burn fetch failed: ${data.message}`);
+      return [];
+    }
+    const events = normalizeEtherscanBatch(data.result, token, 'ETH', 'etherscan');
+    console.log(`[Etherscan] Got ${events.length} ${token} mint/burn events from ETH (page ${page})`);
+    return events;
+  });
 }
 
 /**

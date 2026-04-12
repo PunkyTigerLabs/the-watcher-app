@@ -40,9 +40,14 @@ router.get('/overview', async (_req, res) => {
       biggestEntityType: biggestEvent?.to_entity_type || biggestEvent?.from_entity_type,
     });
 
-    // Get supply from snapshot
+    // Get supply: token-contract snapshot first, then CoinGecko market_supply,
+    // so routes never ship 0 while the 15-min cron is still warming up.
     const supplySnapshot = getSnapshot('supply_usdc');
-    const totalSupply = supplySnapshot?.data?.totalSupply || 0;
+    const marketSupplySnapshot = getSnapshot('market_supply');
+    const totalSupply =
+      supplySnapshot?.data?.totalSupply ||
+      marketSupplySnapshot?.data?.usdc ||
+      0;
 
     const chartData = getDailyMintBurn('USDC');
 

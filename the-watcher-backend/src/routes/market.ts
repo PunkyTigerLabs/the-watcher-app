@@ -4,7 +4,7 @@
 // Free endpoints for supply and exchange data
 
 import express from 'express';
-import { getSnapshot, saveSnapshot } from '../db';
+import { getSnapshot, saveSnapshot, getDb } from '../db';
 import { fetchSupplyData, fetchBtcEthPrices as fetchBtcEthFromCoinGecko } from '../services/coingecko';
 import { fetchStablecoinSupplyByChain, fetchStablecoinTVLByChain } from '../services/defillama';
 import { getExchangeFlowSignal, fetchBtcEthPrices as fetchBtcEthFromBinance } from '../services/binance';
@@ -99,6 +99,74 @@ router.get('/exchange', async (_req, res) => {
   } catch (error) {
     console.error('[Market] Exchange error:', error);
     res.status(500).json({ error: 'Failed to fetch exchange data' });
+  }
+});
+
+/**
+ * GET /market/distribution
+ * Cross-chain distribution per token — where the liquidity lives right now
+ * and where it moved over 7d. This is the "liquidity migration" signal:
+ * when USDC share on Base grows while ETH share shrinks, institutional
+ * capital is rotating chains.
+ */
+router.get('/distribution', (_req, res) => {
+  try {
+    const db = getDb();
+    const since24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    const since7d = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+
+    const getShares = (token: string, since: string) => {
+      const rows = db.prepare(`
+        SELECT chain, COALESCE(SUM(amount), 0) as vol, COUNT(*) as evs
+        FROM events
+        WHERE token = ? AND timestamp >= ?
+        GROUP BY chain
+      `).all(token, since) as Array<{ chain: string; vol: number; evs: number }>;
+      const total = rows.reduce((s, r) => s + r.vol, 0);
+      return rows.map((r) => ({
+        chain: r.chain,
+        volume: r.vol,
+        events: r.evs,
+        share: total > 0 ? r.vol / total : 0,
+      }));
+    };
+
+    const usdc24h = getShares('USDC', since24h);
+    const usdc7d = getShares('USDC', since7d);
+    const usdt24h = getShares('USDT', since24h);
+    const usdt7d = getShares('USDT', since7d);
+
+    // Compute share deltas (24h vs 7d avg) — positive delta = chain is gaining
+    const delta = (
+      shares24: typeof usdc24h,
+      shares7d: typeof usdc24h
+    ): Record<string, number> => {
+      const out: Record<string, number> = {};
+      const all = new Set([...shares24, ...shares7d].map((r) => r.chain));
+      for (const chain of all) {
+        const a = shares24.find((r) => r.chain === chain)?.share ?? 0;
+        const b = shares7d.find((r) => r.chain === chain)?.share ?? 0;
+        out[chain] = a - b;
+      }
+      return out;
+    };
+
+    res.json({
+      usdc: {
+        current: usdc24h,
+        history7d: usdc7d,
+        shareDelta: delta(usdc24h, usdc7d),
+      },
+      usdt: {
+        current: usdt24h,
+        history7d: usdt7d,
+        shareDelta: delta(usdt24h, usdt7d),
+      },
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    console.error('[Market] Distribution error:', error);
+    res.status(500).json({ error: 'Failed to compute distribution' });
   }
 });
 

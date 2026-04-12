@@ -41,7 +41,7 @@ export async function fetchUSDTTransfersTRON(): Promise<CanonicalEvent[]> {
     try {
       // Primary: Fetch TRC-20 transfers for the USDT contract via events endpoint
       const url = `${BASE_URL}/v1/contracts/${CONTRACTS.USDT.TRON}/events` +
-        `?event_name=Transfer&order_by=block_timestamp,desc&limit=100`;
+        `?event_name=Transfer&order_by=block_timestamp,desc&limit=200`;
 
       const response = await fetch(url, { headers });
       const data = (await response.json()) as any;
@@ -93,7 +93,7 @@ async function fetchUSDTViaAccountEndpoint(
   try {
     const treasuryAddress = 'TKHuVq1oKVruCGLvDBhBmjtxtECe15RGSW';
     const url = `${BASE_URL}/v1/accounts/${treasuryAddress}/transactions/trc20` +
-      `?limit=100&order_by=block_timestamp,desc` +
+      `?limit=200&order_by=block_timestamp,desc` +
       `&contract_address=${CONTRACTS.USDT.TRON}`;
 
     const response = await fetch(url, { headers });

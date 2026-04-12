@@ -13,6 +13,7 @@ interface WalletMap {
 // Build lookup maps (lowercase addresses for case-insensitive matching)
 const ethWalletMap: WalletMap = {};
 const tronWalletMap: WalletMap = {};
+const baseWalletMap: WalletMap = {};
 
 for (const wallet of walletsData.ethereum) {
   ethWalletMap[wallet.address.toLowerCase()] = {
@@ -28,6 +29,14 @@ for (const wallet of walletsData.tron) {
   };
 }
 
+// Base shares the EVM address space. Merge base-specific labels into the base map.
+for (const wallet of walletsData.base ?? []) {
+  baseWalletMap[wallet.address.toLowerCase()] = {
+    name: wallet.name,
+    type: wallet.type as EntityType,
+  };
+}
+
 export function resolveWallet(
   address: string,
   chain: Chain
@@ -38,7 +47,14 @@ export function resolveWallet(
     const match = tronWalletMap[address];
     if (match) return match;
   } else {
-    const match = ethWalletMap[address.toLowerCase()];
+    const lower = address.toLowerCase();
+    // For Base, prefer base-specific labels then fall through to ETH
+    // (exchanges reuse the same addresses across EVM chains).
+    if (chain === 'BASE') {
+      const baseMatch = baseWalletMap[lower];
+      if (baseMatch) return baseMatch;
+    }
+    const match = ethWalletMap[lower];
     if (match) return match;
   }
 
@@ -65,5 +81,9 @@ export function isKnownWallet(address: string, chain: Chain): boolean {
 
 // Get total count of labeled wallets
 export function getWalletCount(): number {
-  return walletsData.ethereum.length + walletsData.tron.length;
+  return (
+    walletsData.ethereum.length +
+    walletsData.tron.length +
+    (walletsData.base?.length ?? 0)
+  );
 }
