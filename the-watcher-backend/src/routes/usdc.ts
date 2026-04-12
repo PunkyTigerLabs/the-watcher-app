@@ -90,7 +90,7 @@ router.get('/overview', async (_req, res) => {
         totalSupply,
       },
       lastUpdated: new Date().toISOString(),
-      status: events.length > 0 ? 'live' : 'demo',
+      status: stats.eventCount > 0 || topFlows.length > 0 ? 'live' : 'demo',
     };
 
     // Save snapshot for fallback

@@ -7,7 +7,7 @@ import express from 'express';
 import { getSnapshot, saveSnapshot } from '../db';
 import { fetchSupplyData } from '../services/coingecko';
 import { fetchStablecoinSupplyByChain, fetchStablecoinTVLByChain } from '../services/defillama';
-import { getExchangeFlowSignal, fetchTickerData } from '../services/binance';
+import { getExchangeFlowSignal, fetchBtcEthPrices } from '../services/binance';
 
 const router = express.Router();
 
@@ -67,15 +67,12 @@ router.get('/exchange', async (_req, res) => {
     }
 
     // Fetch fresh data
-    const [ticker, pressure] = await Promise.all([
-      fetchTickerData(),
+    const [prices, pressure] = await Promise.all([
+      fetchBtcEthPrices(),
       getExchangeFlowSignal(),
     ]);
 
-    // Extract BTC and ETH prices from ticker (USDCUSDT pair has lastPrice for reference)
-    // For now, use placeholder values if ticker data is unavailable
-    const btc = ticker?.lastPrice ? parseFloat(ticker.lastPrice.toString()) : 0;
-    const eth = ticker?.weighted_avg_price ? parseFloat(ticker.weighted_avg_price.toString()) : 0;
+    const { btc, eth } = prices;
 
     const response = {
       btc,

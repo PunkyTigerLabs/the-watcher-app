@@ -41,6 +41,31 @@ export interface BinanceExchangeData {
 }
 
 /**
+ * Fetch spot prices for BTC and ETH (quoted in USDT).
+ * Uses Binance's /ticker/price — simpler payload than /ticker/24hr.
+ */
+export async function fetchBtcEthPrices(): Promise<{ btc: number; eth: number }> {
+  return await binanceLimiter.execute('binance', async () => {
+    try {
+      const res = await fetch(
+        `${BASE_URL}/ticker/price?symbols=${encodeURIComponent('["BTCUSDT","ETHUSDT"]')}`
+      );
+      const data = (await res.json()) as Array<{ symbol: string; price: string }>;
+      if (!Array.isArray(data)) {
+        console.warn('[Binance] Unexpected price response:', data);
+        return { btc: 0, eth: 0 };
+      }
+      const btc = parseFloat(data.find((d) => d.symbol === 'BTCUSDT')?.price || '0');
+      const eth = parseFloat(data.find((d) => d.symbol === 'ETHUSDT')?.price || '0');
+      return { btc, eth };
+    } catch (error) {
+      console.error('[Binance] BTC/ETH price fetch error:', error);
+      return { btc: 0, eth: 0 };
+    }
+  });
+}
+
+/**
  * Fetch 24h ticker data for USDC/USDT pair.
  */
 export async function fetchTickerData(): Promise<TickerData | null> {

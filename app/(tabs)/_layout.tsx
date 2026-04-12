@@ -33,21 +33,11 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'USDC',
+          title: 'FLOWS',
           tabBarIcon: ({ focused }) => (
-            <TabIcon focused={focused} icon="◇" activeColor="#2775CA" />
+            <TabIcon focused={focused} icon="◈" activeColor={colors.cyan} />
           ),
-          tabBarActiveTintColor: '#2775CA',
-        }}
-      />
-      <Tabs.Screen
-        name="usdt"
-        options={{
-          title: 'USDT',
-          tabBarIcon: ({ focused }) => (
-            <TabIcon focused={focused} icon="⬡" activeColor="#26A17B" />
-          ),
-          tabBarActiveTintColor: '#26A17B',
+          tabBarActiveTintColor: colors.cyan,
         }}
       />
       <Tabs.Screen
