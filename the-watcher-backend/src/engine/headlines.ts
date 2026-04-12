@@ -136,7 +136,7 @@ export function generateSignalHeadline(
   const diverging = (usdcScore > 20 && usdtScore < -20) || (usdcScore < -20 && usdtScore > 20);
 
   if (score > 60 && bothPositive) {
-    return 'STRONG ACCUMULATION \u2014 Superman and Bizarro agree. Both printing.';
+    return 'STRONG ACCUMULATION — USDC and USDT aligned. Both printing.';
   }
   if (score < -60 && bothNegative) {
     return 'DISTRIBUTION \u2014 Capital leaving both systems. Defensive positioning.';

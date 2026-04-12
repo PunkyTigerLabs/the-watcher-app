@@ -349,7 +349,7 @@ function checkDivergenceFlip(db: any): PatternFlag | null {
       id: `divergence-flip-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       pattern: 'DIVERGENCE_FLIP',
       severity: 'high',
-      message: `DIVERGENCE FLIP \u2014 ${detail}. Superman and Bizarro changing moves.`,
+      message: `DIVERGENCE FLIP — ${detail}. Directional regime change.`,
       timestamp: new Date().toISOString(),
       active: true,
     };

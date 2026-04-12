@@ -62,7 +62,7 @@ export const superman = {
   tabIcon: '◇',
   tokenName: 'USDC',
   entityName: 'Circle',
-  tagline: 'Superman',
+  tagline: 'Institutional',
 };
 
 // ---- Bizarro Theme (USDT) ----
@@ -84,7 +84,7 @@ export const bizarro = {
   tabIcon: '⬡',
   tokenName: 'USDT',
   entityName: 'Tether',
-  tagline: 'Bizarro',
+  tagline: 'Underground',
   // TRON visual distinction
   tron: {
     color: '#FF0013',

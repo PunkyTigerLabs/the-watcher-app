@@ -80,13 +80,16 @@ export const CRON_INTERVALS = {
 // API configuration
 export const API_CONFIG = {
   ETHERSCAN: {
-    BASE_URL: 'https://api.etherscan.io/api',
+    BASE_URL: 'https://api.etherscan.io/v2/api',
     API_KEY: process.env.ETHERSCAN_API_KEY || '',
     RATE_LIMIT: 5, // calls per second
+    CHAIN_ID_ETH: 1,
+    CHAIN_ID_BASE: 8453,
   },
   BASESCAN: {
-    BASE_URL: 'https://api.basescan.org/api',
-    API_KEY: process.env.BASESCAN_API_KEY || '',
+    // Blockscout (Base) — Etherscan-compatible, no API key required, works for free
+    BASE_URL: 'https://base.blockscout.com/api',
+    API_KEY: '',
     RATE_LIMIT: 5,
   },
   TRONGRID: {

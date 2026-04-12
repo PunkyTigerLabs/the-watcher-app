@@ -14,7 +14,7 @@ export function computeDivergence(
     const direction = usdcScore > 0 ? 'accumulating' : usdcScore < 0 ? 'distributing' : 'neutral';
     return {
       score: Math.round((usdcScore + usdtScore) / 2), // Reinforcing signal
-      note: `Superman and Bizarro agree. Both ${direction}.`,
+      note: `USDC and USDT aligned. Both ${direction}.`,
     };
   }
 

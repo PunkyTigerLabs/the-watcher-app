@@ -23,6 +23,7 @@ interface EtherscanResponse {
  */
 async function fetchTokenTransfers(
   contractAddress: string,
+  chainId: number = API_CONFIG.ETHERSCAN.CHAIN_ID_ETH,
   page: number = 1,
   offset: number = 100, // Max 100 results per call for free tier
   sort: 'asc' | 'desc' = 'desc'
@@ -33,7 +34,7 @@ async function fetchTokenTransfers(
   }
 
   return await etherscanLimiter.execute('etherscan', async () => {
-    const url = `${BASE_URL}?module=account&action=tokentx` +
+    const url = `${BASE_URL}?chainid=${chainId}&module=account&action=tokentx` +
       `&contractaddress=${contractAddress}` +
       `&page=${page}&offset=${offset}&sort=${sort}` +
       `&apikey=${API_KEY}`;
@@ -42,7 +43,7 @@ async function fetchTokenTransfers(
     const data = (await response.json()) as EtherscanResponse;
 
     if (data.status !== '1' || !Array.isArray(data.result)) {
-      console.warn(`[Etherscan] API returned: ${data.message}`);
+      console.warn(`[Etherscan v2 chain=${chainId}] API returned: ${data.message} — ${typeof data.result === 'string' ? data.result : ''}`);
       return [];
     }
 
@@ -75,18 +76,24 @@ export async function fetchUSDTTransfersETH(): Promise<CanonicalEvent[]> {
 /**
  * Fetch total supply of a token contract.
  */
-export async function fetchTokenSupply(contractAddress: string): Promise<number> {
+export async function fetchTokenSupply(
+  contractAddress: string,
+  chainId: number = API_CONFIG.ETHERSCAN.CHAIN_ID_ETH
+): Promise<number> {
   if (!API_KEY) return 0;
 
   return await etherscanLimiter.execute('etherscan', async () => {
-    const url = `${BASE_URL}?module=stats&action=tokensupply` +
+    const url = `${BASE_URL}?chainid=${chainId}&module=stats&action=tokensupply` +
       `&contractaddress=${contractAddress}` +
       `&apikey=${API_KEY}`;
 
     const response = await fetch(url);
-    const data = (await response.json()) as { status: string; result: string };
+    const data = (await response.json()) as { status: string; message?: string; result: string };
 
-    if (data.status !== '1') return 0;
+    if (data.status !== '1') {
+      console.warn(`[Etherscan v2 chain=${chainId}] tokensupply: ${data.message} — ${data.result}`);
+      return 0;
+    }
     return parseFloat(data.result) / 1e6; // USDC/USDT have 6 decimals
   });
 }

@@ -51,7 +51,7 @@ export function generateDecisionContext(
 
   // Divergence insight
   if (Math.abs(subscores.usdc - subscores.usdt) > 50) {
-    points.push('\u26a0 Superman/Bizarro divergence elevated \u2014 watch for resolution');
+    points.push('⚠ USDC/USDT divergence elevated — watch for resolution');
   }
 
   return points;
