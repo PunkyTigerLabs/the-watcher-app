@@ -133,56 +133,52 @@ export default function SignalTab() {
             </GlowCard>
           )}
 
-          {/* Subscores (PRO shows full, FREE shows limited) */}
-          <PaywallGate feature="full signal breakdown">
-            <GlowCard glowColor={scoreColor}>
-              <Text style={styles.sectionTitle}>SCORE BREAKDOWN</Text>
-              {SUBSCORES.map((s) => {
-                const val = subscores?.[s.key] ?? 0;
-                const normalized = ((val + 100) / 200) * 100; // -100..+100 → 0..100%
-                return (
-                  <View key={s.key} style={styles.subscore}>
-                    <View style={styles.subscoreTop}>
-                      <Text style={styles.subscoreLabel}>{s.icon} {s.label}</Text>
-                      <View style={styles.subscoreRight}>
-                        <Text style={styles.subscoreWeight}>{s.weight}</Text>
-                        <Text style={[styles.subscoreValue, { color: val > 0 ? colors.green : val < 0 ? colors.red : colors.gold }]}>
-                          {val > 0 ? '+' : ''}{val.toFixed(0)}
-                        </Text>
-                      </View>
-                    </View>
-                    <View style={styles.barTrack}>
-                      <View
-                        style={[
-                          styles.barFill,
-                          { width: `${Math.max(2, normalized)}%`, backgroundColor: s.color },
-                        ]}
-                      />
+          {/* Subscores — free core value */}
+          <GlowCard glowColor={scoreColor}>
+            <Text style={styles.sectionTitle}>SCORE BREAKDOWN</Text>
+            {SUBSCORES.map((s) => {
+              const val = subscores?.[s.key] ?? 0;
+              const normalized = ((val + 100) / 200) * 100; // -100..+100 → 0..100%
+              return (
+                <View key={s.key} style={styles.subscore}>
+                  <View style={styles.subscoreTop}>
+                    <Text style={styles.subscoreLabel}>{s.icon} {s.label}</Text>
+                    <View style={styles.subscoreRight}>
+                      <Text style={styles.subscoreWeight}>{s.weight}</Text>
+                      <Text style={[styles.subscoreValue, { color: val > 0 ? colors.green : val < 0 ? colors.red : colors.gold }]}>
+                        {val > 0 ? '+' : ''}{val.toFixed(0)}
+                      </Text>
                     </View>
                   </View>
-                );
-              })}
-            </GlowCard>
-          </PaywallGate>
-
-          {/* Decision Context (PRO) */}
-          {decisionContext && decisionContext.length > 0 && (
-            <PaywallGate feature="decision context">
-              <GlowCard glowColor={colors.cyan}>
-                <View style={styles.decisionHeader}>
-                  <PulsingDot color={colors.cyan} size={4} />
-                  <Text style={[styles.sectionTitle, { color: colors.cyan, marginBottom: 0 }]}>
-                    DECISION CONTEXT
-                  </Text>
+                  <View style={styles.barTrack}>
+                    <View
+                      style={[
+                        styles.barFill,
+                        { width: `${Math.max(2, normalized)}%`, backgroundColor: s.color },
+                      ]}
+                    />
+                  </View>
                 </View>
-                {decisionContext.map((line, i) => (
-                  <View key={i} style={styles.decisionRow}>
-                    <Text style={styles.decisionBullet}>▸</Text>
-                    <Text style={styles.decisionText}>{line}</Text>
-                  </View>
-                ))}
-              </GlowCard>
-            </PaywallGate>
+              );
+            })}
+          </GlowCard>
+
+          {/* Decision Context — free core value */}
+          {decisionContext && decisionContext.length > 0 && (
+            <GlowCard glowColor={colors.cyan}>
+              <View style={styles.decisionHeader}>
+                <PulsingDot color={colors.cyan} size={4} />
+                <Text style={[styles.sectionTitle, { color: colors.cyan, marginBottom: 0 }]}>
+                  DECISION CONTEXT
+                </Text>
+              </View>
+              {decisionContext.map((line, i) => (
+                <View key={i} style={styles.decisionRow}>
+                  <Text style={styles.decisionBullet}>▸</Text>
+                  <Text style={styles.decisionText}>{line}</Text>
+                </View>
+              ))}
+            </GlowCard>
           )}
 
           {/* Active Patterns (PRO) */}

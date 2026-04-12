@@ -95,6 +95,27 @@ export async function fetchStablecoinData(): Promise<CoinGeckoResponse> {
 }
 
 /**
+ * Fetch BTC and ETH spot prices from CoinGecko.
+ * Use this as the primary source — Binance public API blocks Railway/AWS egress.
+ */
+export async function fetchBtcEthPrices(): Promise<{ btc: number; eth: number }> {
+  return await coingeckoLimiter.execute('coingecko', async () => {
+    try {
+      const url = `${BASE_URL}/simple/price?ids=bitcoin,ethereum&vs_currencies=usd`;
+      const res = await fetch(url);
+      const data = (await res.json()) as { bitcoin?: { usd: number }; ethereum?: { usd: number } };
+      return {
+        btc: data.bitcoin?.usd ?? 0,
+        eth: data.ethereum?.usd ?? 0,
+      };
+    } catch (error) {
+      console.error('[CoinGecko] Price fetch error:', error);
+      return { btc: 0, eth: 0 };
+    }
+  });
+}
+
+/**
  * Get supply data for USDC and USDT.
  */
 export async function fetchSupplyData(): Promise<{

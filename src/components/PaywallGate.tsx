@@ -3,8 +3,7 @@
 // ============================================
 // Blurs PRO content for free users
 
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import { View, Text, StyleSheet, Pressable, Alert } from 'react-native';
 import { colors } from '../theme';
 import { isPro } from '../api/watcher';
 
@@ -18,124 +17,85 @@ export default function PaywallGate({ children, feature = 'this feature' }: Prop
     return <>{children}</>;
   }
 
+  const onUpgrade = () => {
+    Alert.alert(
+      'The Watcher PRO',
+      'In-app subscriptions are coming soon. For early access, email contacto@walzustore.com.',
+      [{ text: 'Got it', style: 'default' }],
+    );
+  };
+
   return (
-    <View style={styles.container}>
-      <View style={styles.previewSection}>
-        {children}
+    <Pressable onPress={onUpgrade} style={styles.card}>
+      <View style={styles.iconRow}>
+        <Text style={styles.iconGlyph}>⟐</Text>
+        <Text style={styles.proTag}>PRO</Text>
       </View>
-
-      <View style={styles.fadeOverlay}>
-        <LinearGradient
-          colors={['transparent', 'rgba(6,9,15,0.6)', 'rgba(6,9,15,1)']}
-          start={{ x: 0.5, y: 0 }}
-          end={{ x: 0.5, y: 1 }}
-          style={styles.gradientOverlay}
-        />
+      <Text style={styles.title}>Unlock {feature}</Text>
+      <Text style={styles.subtitle}>
+        Advanced pattern detection, whale tracking and AI analyst — available with The Watcher PRO.
+      </Text>
+      <View style={styles.cta}>
+        <Text style={styles.ctaText}>REQUEST EARLY ACCESS</Text>
       </View>
-
-      <LinearGradient
-        colors={['rgba(6,9,15,0)', 'rgba(6,9,15,0.4)', 'rgba(6,9,15,0.95)']}
-        start={{ x: 0, y: 0.5 }}
-        end={{ x: 1, y: 0.5 }}
-        style={styles.sideGradient}
-      />
-
-      <View style={styles.lockContainer}>
-        <View style={styles.lockIcon}>
-          <Text style={styles.lockEmoji}>⟐</Text>
-        </View>
-        <Text style={styles.title}>PRO INTELLIGENCE</Text>
-        <Text style={styles.subtitle}>Unlock {feature} with The Watcher PRO</Text>
-        <TouchableOpacity style={styles.button} activeOpacity={0.8}>
-          <Text style={styles.buttonText}>UPGRADE — $30/mo</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
+    </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    position: 'relative',
-    overflow: 'hidden',
-  },
-  previewSection: {
-    opacity: 0.2,
-    maxHeight: '20%',
-    overflow: 'hidden',
-  },
-  fadeOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    pointerEvents: 'none',
-  },
-  gradientOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-  },
-  sideGradient: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    pointerEvents: 'none',
-  },
-  lockContainer: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 32,
-  },
-  lockIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: colors.green + '08',
+  card: {
+    marginHorizontal: 16,
+    marginVertical: 8,
+    padding: 20,
+    borderRadius: 14,
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: colors.green + '40',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 16,
+    borderColor: colors.green + '30',
   },
-  lockEmoji: {
-    fontSize: 28,
+  iconRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 10,
+  },
+  iconGlyph: {
+    fontSize: 18,
     color: colors.green,
+  },
+  proTag: {
+    color: colors.green,
+    fontSize: 9,
+    fontWeight: '900',
+    letterSpacing: 2,
+    backgroundColor: colors.green + '15',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 3,
   },
   title: {
     color: colors.text,
     fontSize: 14,
-    fontWeight: '800',
-    letterSpacing: 2,
-    marginBottom: 8,
+    fontWeight: '700',
+    marginBottom: 6,
   },
   subtitle: {
     color: colors.textSub,
     fontSize: 12,
-    textAlign: 'center',
-    marginBottom: 20,
+    lineHeight: 17,
+    marginBottom: 14,
   },
-  button: {
-    backgroundColor: colors.green + '15',
-    borderWidth: 1.5,
-    borderColor: colors.green + '60',
-    borderRadius: 10,
-    paddingHorizontal: 28,
-    paddingVertical: 12,
+  cta: {
+    alignSelf: 'flex-start',
+    backgroundColor: colors.green + '10',
+    borderWidth: 1,
+    borderColor: colors.green + '50',
+    borderRadius: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 9,
   },
-  buttonText: {
+  ctaText: {
     color: colors.green,
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: '800',
     letterSpacing: 1.5,
   },

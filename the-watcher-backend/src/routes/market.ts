@@ -5,9 +5,9 @@
 
 import express from 'express';
 import { getSnapshot, saveSnapshot } from '../db';
-import { fetchSupplyData } from '../services/coingecko';
+import { fetchSupplyData, fetchBtcEthPrices as fetchBtcEthFromCoinGecko } from '../services/coingecko';
 import { fetchStablecoinSupplyByChain, fetchStablecoinTVLByChain } from '../services/defillama';
-import { getExchangeFlowSignal, fetchBtcEthPrices } from '../services/binance';
+import { getExchangeFlowSignal, fetchBtcEthPrices as fetchBtcEthFromBinance } from '../services/binance';
 
 const router = express.Router();
 
@@ -66,13 +66,19 @@ router.get('/exchange', async (_req, res) => {
       return res.json(cached.data);
     }
 
-    // Fetch fresh data
-    const [prices, pressure] = await Promise.all([
-      fetchBtcEthPrices(),
+    // CoinGecko is the primary price source (Binance blocks Railway/AWS IPs).
+    // We still try Binance for the order-book pressure signal.
+    const [cgPrices, pressure] = await Promise.all([
+      fetchBtcEthFromCoinGecko(),
       getExchangeFlowSignal(),
     ]);
 
-    const { btc, eth } = prices;
+    let { btc, eth } = cgPrices;
+    if (!btc || !eth) {
+      const bn = await fetchBtcEthFromBinance();
+      btc = btc || bn.btc;
+      eth = eth || bn.eth;
+    }
 
     const response = {
       btc,
